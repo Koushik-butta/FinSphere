@@ -4,11 +4,15 @@
 {% block head_extra %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
+/* ── Modal theming ── */
 .modal-content { background: var(--surface-solid) !important; border: 1px solid var(--border) !important; border-radius: 18px !important; color: var(--text) !important; }
 .modal-header, .modal-footer { border-color: var(--border) !important; }
 .modal-title { color: var(--text) !important; font-weight: 700; }
-.btn-close { filter: var(--btn-close-filter, none); }
 [data-theme="dark"] .modal-content .btn-close { filter: invert(1); }
+
+/* ── iframe preview ── */
+#preview-frame { width:100%; height:75vh; border:none; }
+#preview-img   { display:block; max-width:100%; max-height:75vh; margin:auto; padding:1rem; }
 </style>
 {% endblock %}
 
@@ -18,7 +22,9 @@
   <!-- Mobile Sidebar Overlay -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
 
-  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <!-- ════════════════════════════════════════
+       SIDEBAR
+       ════════════════════════════════════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon"><i class="bi bi-safe2-fill"></i></div>
@@ -28,103 +34,77 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">MAIN</div>
 
-      <a class="nav-item active" data-section="overview" href="#overview"
-         id="nav-overview" title="Dashboard">
-        <i class="bi bi-speedometer2"></i>
-        <span class="nav-label">Dashboard</span>
+      <a class="nav-item active" data-section="overview" href="#overview" id="nav-overview" title="Dashboard">
+        <i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span>
       </a>
 
       {% if role == 'admin' %}
-      <a class="nav-item" data-section="upload-section" href="#upload-section"
-         id="nav-upload" title="Upload Documents">
-        <i class="bi bi-cloud-upload-fill"></i>
-        <span class="nav-label">Upload Document</span>
+      <a class="nav-item" data-section="upload-section" href="#upload-section" id="nav-upload" title="Upload">
+        <i class="bi bi-cloud-upload-fill"></i><span class="nav-label">Upload Document</span>
       </a>
       {% endif %}
 
-      <a class="nav-item" data-section="documents" href="#documents"
-         id="nav-documents" title="Documents">
-        <i class="bi bi-folder2-open"></i>
-        <span class="nav-label">Documents</span>
-        {% if documents %}
-        <span class="nav-badge">{{ documents|length }}</span>
-        {% endif %}
+      <a class="nav-item" data-section="documents" href="#documents" id="nav-documents" title="Documents">
+        <i class="bi bi-folder2-open"></i><span class="nav-label">Documents</span>
+        {% if documents %}<span class="nav-badge">{{ documents|length }}</span>{% endif %}
       </a>
 
-      <a class="nav-item" data-section="categories" href="#categories"
-         id="nav-categories" title="Categories">
-        <i class="bi bi-grid-3x3-gap-fill"></i>
-        <span class="nav-label">Categories</span>
+      <a class="nav-item" data-section="categories" href="#categories" id="nav-categories" title="Categories">
+        <i class="bi bi-grid-3x3-gap-fill"></i><span class="nav-label">Categories</span>
       </a>
 
-      <a class="nav-item" data-section="members" href="#members"
-         id="nav-members" title="Family Members">
-        <i class="bi bi-people-fill"></i>
-        <span class="nav-label">Family Members</span>
+      <a class="nav-item" data-section="members" href="#members" id="nav-members" title="Family Members">
+        <i class="bi bi-people-fill"></i><span class="nav-label">Family Members</span>
       </a>
 
       {% if role == 'admin' %}
       <div class="nav-section-label mt-2">ADMIN</div>
 
-      <a class="nav-item" data-section="permissions" href="#permissions"
-         id="nav-permissions" title="Permissions">
-        <i class="bi bi-person-lock"></i>
-        <span class="nav-label">Permissions</span>
+      <a class="nav-item" data-section="permissions" href="#permissions" id="nav-permissions" title="Permissions">
+        <i class="bi bi-person-lock"></i><span class="nav-label">Permissions</span>
       </a>
-
-      <a class="nav-item" data-section="history" href="#history"
-         id="nav-history" title="Download History">
-        <i class="bi bi-clock-history"></i>
-        <span class="nav-label">Download History</span>
+      <a class="nav-item" data-section="history" href="#history" id="nav-history" title="Download History">
+        <i class="bi bi-clock-history"></i><span class="nav-label">Download History</span>
       </a>
-
-      <a class="nav-item" data-section="recycle" href="#recycle"
-         id="nav-recycle" title="Recycle Bin">
-        <i class="bi bi-trash3"></i>
-        <span class="nav-label">Recycle Bin</span>
-        {% if deleted_documents %}
-        <span class="nav-badge">{{ deleted_documents|length }}</span>
-        {% endif %}
+      <a class="nav-item" data-section="recycle" href="#recycle" id="nav-recycle" title="Recycle Bin">
+        <i class="bi bi-trash3"></i><span class="nav-label">Recycle Bin</span>
+        {% if deleted_documents %}<span class="nav-badge">{{ deleted_documents|length }}</span>{% endif %}
       </a>
       {% endif %}
 
       <div class="nav-section-label mt-2">ACCOUNT</div>
-
       <a class="nav-item nav-danger" href="{{ url_for('auth.logout') }}" title="Logout">
-        <i class="bi bi-box-arrow-right"></i>
-        <span class="nav-label">Logout</span>
+        <i class="bi bi-box-arrow-right"></i><span class="nav-label">Logout</span>
       </a>
     </nav>
   </aside>
 
-  <!-- ── Main Wrap ──────────────────────────────────────────── -->
+  <!-- ════════════════════════════════════════
+       MAIN WRAP
+       ════════════════════════════════════════ -->
   <div class="main-wrap" id="main-wrap">
 
-    <!-- ── Topbar ──────────────────────────────────────────── -->
+    <!-- ── Topbar ──────────────────────────────── -->
     <header class="topbar">
-      <button class="topbar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"
-              aria-label="Toggle sidebar">
+      <button class="topbar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
         <i class="bi bi-list"></i>
       </button>
 
       <!-- Global Search -->
       <div class="topbar-search" id="search-wrap">
         <i class="bi bi-search search-icon"></i>
-        <input type="text" id="global-search" placeholder="Search documents, tags…"
-               autocomplete="off" aria-label="Global search">
+        <input type="text" id="global-search" placeholder="Search documents, tags…" autocomplete="off" aria-label="Global search">
         <div class="search-results" id="search-results"></div>
       </div>
 
       <div class="topbar-right">
-        <!-- Theme Toggle -->
         <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
           <i class="theme-icon bi bi-moon-stars-fill"></i>
         </button>
 
         <!-- Profile Dropdown -->
         <div class="profile-dropdown" id="profile-dropdown">
-          <div class="profile-trigger" id="profile-trigger" onclick="toggleProfileMenu()"
-               role="button" aria-haspopup="true">
+          <div class="profile-trigger" id="profile-trigger" onclick="toggleProfileMenu()" role="button" aria-haspopup="true">
             <div class="profile-avatar">{{ name[0]|upper }}</div>
             <div class="d-none d-sm-block">
               <div class="profile-name">{{ name }}</div>
@@ -149,24 +129,24 @@
       </div>
     </header>
 
-    <!-- ── Content ────────────────────────────────────────── -->
+    <!-- ── Content ─────────────────────────────── -->
     <main class="content">
 
       <!-- Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
-              <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+          <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Overview / Dashboard
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section" id="section-overview">
 
         <!-- Welcome Banner -->
@@ -177,8 +157,7 @@
                 <h4><i class="bi bi-hand-wave me-2"></i>Welcome back, {{ name }}!</h4>
                 <p>
                   {% if role == 'admin' %}
-                    You have <strong>{{ documents|length }}</strong> active documents
-                    and <strong>{{ member_count }}</strong> family member{{ 's' if member_count != 1 }}.
+                    You have <strong>{{ documents|length }}</strong> active documents and <strong>{{ member_count }}</strong> family member{{ 's' if member_count != 1 }}.
                   {% else %}
                     You have access to <strong>{{ documents|length }}</strong> shared document{{ 's' if documents|length != 1 }}.
                   {% endif %}
@@ -187,8 +166,7 @@
               {% if role == 'admin' and family_code %}
               <div style="position:relative;z-index:1;">
                 <p style="font-size:0.7rem;opacity:0.8;text-transform:uppercase;font-weight:700;margin-bottom:0.3rem;letter-spacing:0.5px;">Family Code</p>
-                <div class="family-code-pill" id="code-pill" onclick="copyFamilyCode('{{ family_code }}')"
-                     title="Click to copy">
+                <div class="family-code-pill" id="code-pill" onclick="copyFamilyCode('{{ family_code }}')" title="Click to copy">
                   <i class="bi bi-link-45deg"></i>{{ family_code }}
                 </div>
                 <p style="font-size:0.68rem;opacity:0.6;margin-top:0.25rem;">Click to copy &amp; share</p>
@@ -205,7 +183,7 @@
             <i class="bi bi-cloud-upload-fill"></i> Upload Document
           </a>
           <a class="quick-btn" onclick="switchSection('members'); return false;" href="#">
-            <i class="bi bi-person-plus-fill"></i> Add Member
+            <i class="bi bi-person-plus-fill"></i> Family Members
           </a>
           <a class="quick-btn" onclick="switchSection('permissions'); return false;" href="#">
             <i class="bi bi-person-lock"></i> Manage Permissions
@@ -254,8 +232,8 @@
         <!-- Dashboard Grid: Chart + Activity/Storage -->
         <div class="dash-grid">
 
-          <!-- Analytics Chart -->
           {% if role == 'admin' %}
+          <!-- Analytics Chart -->
           <div class="glass-card mb-md-0 mb-3">
             <div class="card-head">
               <h5><i class="bi bi-bar-chart-line-fill"></i> 7-Day Activity</h5>
@@ -266,7 +244,6 @@
             </div>
             <div class="card-body">
               <div class="chart-wrap"><canvas id="activityChart" aria-label="Activity chart"></canvas></div>
-              <!-- Today stats -->
               <div class="d-flex gap-3 mt-3 flex-wrap">
                 <div style="flex:1;min-width:120px;background:var(--sb-active);border-radius:10px;padding:0.7rem 0.85rem;">
                   <div style="font-size:1.4rem;font-weight:900;color:var(--primary);">{{ analytics.up_today or 0 }}</div>
@@ -286,11 +263,9 @@
             </div>
           </div>
           {% else %}
-          <!-- Member sees recent docs -->
+          <!-- Member: Recent Docs -->
           <div class="glass-card">
-            <div class="card-head">
-              <h5><i class="bi bi-clock-history"></i> Recent Documents</h5>
-            </div>
+            <div class="card-head"><h5><i class="bi bi-clock-history"></i> Recent Documents</h5></div>
             <div class="card-body p-0">
               {% if documents[:5] %}
               <div class="table-responsive">
@@ -319,10 +294,10 @@
           </div>
           {% endif %}
 
-          <!-- Right column: Activity + Storage -->
+          <!-- Right column: Storage + Activity -->
           <div class="d-flex flex-column gap-3">
-
             {% if role == 'admin' %}
+
             <!-- Storage Indicator -->
             <div class="glass-card">
               <div class="card-head">
@@ -336,20 +311,17 @@
                 </div>
                 <div class="storage-bar-track">
                   <div class="storage-bar-fill{% if storage.get('pct',0) > 80 %} danger{% elif storage.get('pct',0) > 60 %} warning{% endif %}"
-                       style="width:{{ storage.get('pct', 0) }}%;" id="storage-fill"></div>
+                       style="width:{{ storage.get('pct', 0) }}%;"></div>
                 </div>
                 <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;margin-bottom:0;">
-                  <i class="bi bi-info-circle me-1"></i>
-                  {{ storage.get('cap_fmt', '1 GB') }} total family storage
+                  <i class="bi bi-info-circle me-1"></i>{{ storage.get('cap_fmt', '1 GB') }} total family storage
                 </p>
               </div>
             </div>
 
             <!-- Activity Timeline -->
             <div class="glass-card" style="flex:1;overflow:hidden;">
-              <div class="card-head">
-                <h5><i class="bi bi-activity"></i> Recent Activity</h5>
-              </div>
+              <div class="card-head"><h5><i class="bi bi-activity"></i> Recent Activity</h5></div>
               <div class="card-body p-0" style="max-height:300px;overflow-y:auto;padding:0 1.25rem !important;">
                 {% if activity %}
                 <div class="activity-list">
@@ -373,14 +345,15 @@
                 {% endif %}
               </div>
             </div>
+
             {% endif %}
           </div>
         </div>
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
-           SECTION: Upload
-           ═══════════════════════════════════════════════════ -->
+      <!-- ══════════════════════════════════════════
+           SECTION: Upload (Admin Only)
+           ══════════════════════════════════════════ -->
       {% if role == 'admin' %}
       <section class="section d-none" id="section-upload-section">
         <div class="section-header">
@@ -388,14 +361,11 @@
         </div>
         <div class="glass-card" style="max-width:680px;">
           <div class="card-body" style="padding:2rem;">
-
             <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
               <i class="bi bi-info-circle-fill fs-5"></i>
-              <span style="font-size:0.85rem;">Uploaded documents are visible to all members with view permission. Set permissions in the Permissions section.</span>
+              <span style="font-size:0.85rem;">Uploaded documents are visible to all members with view permission. Manage permissions in the Permissions section.</span>
             </div>
-
             <form action="{{ url_for('doc.upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
-
               <div class="mb-3">
                 <label for="up-desc" class="form-label">Description</label>
                 <div class="input-group">
@@ -404,7 +374,6 @@
                          placeholder="e.g. Mom's PAN Card, Family Insurance Policy" required>
                 </div>
               </div>
-
               <div class="mb-3">
                 <label for="up-cat" class="form-label">Category</label>
                 <div class="input-group">
@@ -417,9 +386,10 @@
                   </select>
                 </div>
               </div>
-
               <div class="mb-4">
-                <label for="up-tags" class="form-label">Tags <span style="font-weight:400;text-transform:none;letter-spacing:0;">(comma-separated, optional)</span></label>
+                <label for="up-tags" class="form-label">Tags
+                  <span style="font-weight:400;text-transform:none;letter-spacing:0;">(comma-separated, optional)</span>
+                </label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-tags"></i></span>
                   <input type="text" class="form-control" id="up-tags" name="tags"
@@ -463,9 +433,9 @@
       </section>
       {% endif %}
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Documents
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section d-none" id="section-documents">
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-folder2-open"></i> Documents</h1>
@@ -476,7 +446,7 @@
           {% endif %}
         </div>
 
-        <!-- Category Filter -->
+        <!-- Category Filter Pills -->
         {% if categories %}
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
           <button class="btn btn-sm btn-primary" onclick="filterByCategory(null)" id="cat-filter-all">All</button>
@@ -507,10 +477,10 @@
                 </thead>
                 <tbody>
                   {% for doc in documents %}
+                  {% set ext = doc['filename'].rsplit('.',1)[-1].lower() %}
                   <tr data-cat="{{ doc['category_id'] or '' }}">
                     <td class="ps-4" style="color:var(--text-muted);font-size:0.8rem;">{{ loop.index }}</td>
                     <td>
-                      {% set ext = doc['filename'].rsplit('.',1)[-1].lower() %}
                       {% if ext == 'pdf' %}<i class="bi bi-file-earmark-pdf-fill me-2" style="color:#ef4444;"></i>
                       {% else %}<i class="bi bi-file-earmark-image-fill me-2" style="color:#10b981;"></i>{% endif %}
                       <span style="font-weight:600;font-size:0.875rem;">{{ doc['filename'] }}</span>
@@ -536,20 +506,14 @@
                     <td class="d-none d-lg-table-cell" style="font-size:0.75rem;color:var(--text-muted);">{{ doc['upload_date'] }}</td>
                     <td class="pe-4">
                       <div class="d-flex gap-1 justify-content-end">
-                        <!-- Preview -->
-                        {% set ext = doc['filename'].rsplit('.',1)[-1].lower() %}
                         <button class="btn btn-outline-primary btn-sm px-2"
                                 onclick="openPreview({{ doc['id'] }}, '{{ doc['filename'] }}', '{{ ext }}')"
-                                title="Preview">
-                          <i class="bi bi-eye"></i>
-                        </button>
-                        <!-- Download -->
+                                title="Preview"><i class="bi bi-eye"></i></button>
                         <a href="{{ url_for('doc.download', doc_id=doc['id']) }}"
                            class="btn btn-success btn-sm px-2" title="Download">
                           <i class="bi bi-download"></i>
                         </a>
                         {% if role == 'admin' %}
-                        <!-- Delete -->
                         <form action="{{ url_for('doc.delete', doc_id=doc['id']) }}" method="POST" class="m-0"
                               onsubmit="return confirm('Move «{{ doc['filename'] }}» to Recycle Bin?')">
                           <button type="submit" class="btn btn-outline-danger btn-sm px-2" title="Delete">
@@ -575,9 +539,9 @@
         </div>
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Categories
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section d-none" id="section-categories">
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-grid-3x3-gap-fill"></i> Document Categories</h1>
@@ -616,7 +580,6 @@
         </div>
         {% endif %}
 
-        <!-- Default category description -->
         <div class="glass-card mt-4">
           <div class="card-head"><h5><i class="bi bi-info-circle-fill"></i> Default Categories</h5></div>
           <div class="card-body">
@@ -631,9 +594,9 @@
         </div>
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Family Members
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section d-none" id="section-members">
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-people-fill"></i> Family Members</h1>
@@ -647,13 +610,11 @@
 
         {% if family_members %}
         <div class="member-grid">
-          {% for member in family_members %}
           {% set colors = ['#2563eb','#7c3aed','#10b981','#f59e0b','#ef4444','#14b8a6'] %}
+          {% for member in family_members %}
           {% set color = colors[loop.index0 % colors|length] %}
           <div class="member-card">
-            <div class="member-avatar" style="background:{{ color }};">
-              {{ member['name'][0]|upper }}
-            </div>
+            <div class="member-avatar" style="background:{{ color }};">{{ member['name'][0]|upper }}</div>
             <div class="member-name">{{ member['name'] }}</div>
             <div class="member-email">{{ member['email'] }}</div>
             {% if member['role'] == 'admin' %}
@@ -668,14 +629,14 @@
         <div class="empty-state glass-card">
           <i class="bi bi-people"></i>
           <h6>No members yet</h6>
-          <p>Share your family code <strong>{{ family_code }}</strong> so others can join your family group.</p>
+          <p>Share your family code <strong>{{ family_code }}</strong> so others can join.</p>
         </div>
         {% endif %}
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Permissions (Admin)
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       {% if role == 'admin' %}
       <section class="section d-none" id="section-permissions">
         <div class="section-header">
@@ -743,9 +704,9 @@
         {% endif %}
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Download History (Admin)
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section d-none" id="section-history">
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-clock-history"></i> Download History</h1>
@@ -783,9 +744,9 @@
         </div>
       </section>
 
-      <!-- ═══════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════
            SECTION: Recycle Bin (Admin)
-           ═══════════════════════════════════════════════════ -->
+           ══════════════════════════════════════════ -->
       <section class="section d-none" id="section-recycle">
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-trash3" style="color:var(--danger);"></i> Recycle Bin</h1>
@@ -849,16 +810,16 @@
   </div>{# end main-wrap #}
 </div>{# end app-shell #}
 
-<!-- ── Floating Upload Button ─────────────────────────────── -->
+<!-- ── Floating Upload Button ─────────────── -->
 {% if role == 'admin' %}
-<a class="fab-upload" onclick="switchSection('upload-section'); return false;" href="#" id="fab-btn"
-   title="Upload Document">
+<a class="fab-upload" onclick="switchSection('upload-section'); return false;" href="#"
+   id="fab-btn" title="Upload Document">
   <i class="bi bi-cloud-upload-fill"></i>
   <span class="d-none d-sm-inline">Upload</span>
 </a>
 {% endif %}
 
-<!-- ── Document Preview Modal ──────────────────────────────── -->
+<!-- ── Document Preview Modal ─────────────── -->
 <div class="modal fade" id="preview-modal" tabindex="-1" aria-label="Document Preview">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
@@ -885,7 +846,7 @@
   </div>
 </div>
 
-<!-- ── New Category Modal ───────────────────────────────────── -->
+<!-- ── New Category Modal ─────────────────── -->
 {% if role == 'admin' %}
 <div class="modal fade" id="newCategoryModal" tabindex="-1" aria-label="New Category">
   <div class="modal-dialog modal-dialog-centered">
@@ -918,7 +879,8 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Accent Color</label>
-            <input type="color" class="form-control form-control-color" name="color" value="#2563eb" style="border-radius:10px;height:42px;">
+            <input type="color" class="form-control form-control-color" name="color" value="#2563eb"
+                   style="border-radius:10px;height:42px;">
           </div>
         </div>
         <div class="modal-footer">
@@ -929,28 +891,29 @@
     </div>
   </div>
 </div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
 {% endif %}
 
-<!-- Security Overlay -->
+<!-- ── Toast Container ────────────────────── -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ── Security Overlay ───────────────────── -->
 <div id="security-overlay" aria-hidden="true">
   <i class="bi bi-shield-lock-fill"></i>
   <h3>Content Hidden</h3>
   <p>Return to this tab to continue.</p>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
 /* ═══════════════════════════════════════════
-   SIDEBAR
+   1. SIDEBAR — Collapsible (Feature 6/21)
    ═══════════════════════════════════════════ */
-const sidebar   = document.getElementById('sidebar');
-const mainWrap  = document.getElementById('main-wrap');
-const overlay   = document.getElementById('sidebar-overlay');
-let   collapsed = localStorage.getItem('ff-sidebar') === '1';
+const sidebar  = document.getElementById('sidebar');
+const mainWrap = document.getElementById('main-wrap');
+const overlay  = document.getElementById('sidebar-overlay');
+let collapsed  = localStorage.getItem('ff-sidebar') === '1';
 
 function applySidebarState() {
   if (window.innerWidth <= 768) {
@@ -958,13 +921,8 @@ function applySidebarState() {
     mainWrap.classList.remove('collapsed');
     return;
   }
-  if (collapsed) {
-    sidebar.classList.add('collapsed');
-    mainWrap.classList.add('collapsed');
-  } else {
-    sidebar.classList.remove('collapsed');
-    mainWrap.classList.remove('collapsed');
-  }
+  sidebar.classList.toggle('collapsed', collapsed);
+  mainWrap.classList.toggle('collapsed', collapsed);
 }
 
 function toggleSidebar() {
@@ -987,11 +945,11 @@ applySidebarState();
 window.addEventListener('resize', applySidebarState);
 
 /* ═══════════════════════════════════════════
-   SECTION SWITCHING (SPA-like)
+   2. SECTION SWITCHING — SPA-like (Feature 7/20)
    ═══════════════════════════════════════════ */
-const navItems  = document.querySelectorAll('.nav-item[data-section]');
-const sections  = document.querySelectorAll('.section[id^="section-"]');
-const fab       = document.getElementById('fab-btn');
+const navItems = document.querySelectorAll('.nav-item[data-section]');
+const sections = document.querySelectorAll('.section[id^="section-"]');
+const fab      = document.getElementById('fab-btn');
 
 function switchSection(name) {
   sections.forEach(s => s.classList.add('d-none'));
@@ -1009,8 +967,6 @@ function switchSection(name) {
 
   location.hash = name;
   closeMobileSidebar();
-
-  // Hide FAB on upload section
   if (fab) fab.style.display = (name === 'upload-section') ? 'none' : 'flex';
 }
 
@@ -1019,28 +975,26 @@ navItems.forEach(n => n.addEventListener('click', function(e) {
   switchSection(this.dataset.section);
 }));
 
-// Deep-link from hash
+// Deep-link via URL hash
 (function() {
-  const hash = location.hash.replace('#', '');
+  const hash  = location.hash.replace('#','');
   const valid = ['overview','upload-section','documents','categories','members','permissions','history','recycle'];
   if (hash && valid.includes(hash)) switchSection(hash);
 })();
 
 /* ═══════════════════════════════════════════
-   PROFILE DROPDOWN
+   3. PROFILE DROPDOWN (Feature 25)
    ═══════════════════════════════════════════ */
 function toggleProfileMenu() {
   document.getElementById('profile-menu').classList.toggle('open');
 }
 document.addEventListener('click', function(e) {
   const dd = document.getElementById('profile-dropdown');
-  if (dd && !dd.contains(e.target)) {
-    document.getElementById('profile-menu').classList.remove('open');
-  }
+  if (dd && !dd.contains(e.target)) document.getElementById('profile-menu').classList.remove('open');
 });
 
 /* ═══════════════════════════════════════════
-   ANALYTICS CHART
+   4. CHART.JS ANALYTICS (Feature 11/SaaS)
    ═══════════════════════════════════════════ */
 {% if role == 'admin' and analytics %}
 (function() {
@@ -1048,7 +1002,7 @@ document.addEventListener('click', function(e) {
   const uploads   = {{ analytics.uploads   | tojson }};
   const downloads = {{ analytics.downloads | tojson }};
 
-  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark    = () => document.documentElement.getAttribute('data-theme') === 'dark';
   const gridColor = () => isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
   const textColor = () => isDark() ? '#94a3b8' : '#64748b';
 
@@ -1060,65 +1014,35 @@ document.addEventListener('click', function(e) {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Uploads',
-          data: uploads,
-          backgroundColor: 'rgba(37,99,235,0.7)',
-          borderColor: '#2563eb',
-          borderWidth: 1,
-          borderRadius: 6,
-        },
-        {
-          label: 'Downloads',
-          data: downloads,
-          backgroundColor: 'rgba(16,185,129,0.65)',
-          borderColor: '#10b981',
-          borderWidth: 1,
-          borderRadius: 6,
-        },
+        { label:'Uploads',   data:uploads,   backgroundColor:'rgba(37,99,235,0.7)', borderColor:'#2563eb', borderWidth:1, borderRadius:6 },
+        { label:'Downloads', data:downloads, backgroundColor:'rgba(16,185,129,0.65)', borderColor:'#10b981', borderWidth:1, borderRadius:6 },
       ],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: isDark() ? '#0f1b3d' : '#fff',
-          titleColor: isDark() ? '#e2e8f0' : '#1e293b',
-          bodyColor: isDark() ? '#94a3b8' : '#64748b',
-          borderColor: isDark() ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
-          borderWidth: 1,
-          cornerRadius: 10,
-        },
+        legend: { display:false },
+        tooltip: { backgroundColor: isDark()?'#0f1b3d':'#fff', titleColor: isDark()?'#e2e8f0':'#1e293b', bodyColor: isDark()?'#94a3b8':'#64748b', borderColor: isDark()?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.1)', borderWidth:1, cornerRadius:10 },
       },
       scales: {
-        x: {
-          grid: { color: gridColor() },
-          ticks: { color: textColor(), font: { size: 11 } },
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { precision: 0, color: textColor(), font: { size: 11 } },
-          grid: { color: gridColor() },
-        },
+        x: { grid:{ color:gridColor() }, ticks:{ color:textColor(), font:{size:11} } },
+        y: { beginAtZero:true, ticks:{ precision:0, color:textColor(), font:{size:11} }, grid:{ color:gridColor() } },
       },
     },
   });
 
-  // Re-color chart on theme change
-  document.documentElement.addEventListener && new MutationObserver(() => {
+  new MutationObserver(() => {
     chart.options.scales.x.grid.color = gridColor();
     chart.options.scales.y.grid.color = gridColor();
     chart.options.scales.x.ticks.color = textColor();
     chart.options.scales.y.ticks.color = textColor();
     chart.update();
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 })();
 {% endif %}
 
 /* ═══════════════════════════════════════════
-   GLOBAL SEARCH
+   5. GLOBAL SEARCH (Feature 15)
    ═══════════════════════════════════════════ */
 let searchTimer;
 const searchInput   = document.getElementById('global-search');
@@ -1141,25 +1065,22 @@ if (searchInput) {
                 <i class="bi bi-file-earmark-text-fill" style="color:var(--primary);"></i>
                 <div>
                   <div style="font-weight:600;">${d.filename}</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted);">${d.description || ''} ${d.tags ? '· ' + d.tags : ''}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${d.description||''} ${d.tags?'· '+d.tags:''}</div>
                 </div>
               </div>`).join('');
           }
           searchResults.classList.add('active');
-        })
-        .catch(() => {});
+        }).catch(() => {});
     }, 350);
   });
-
-  document.addEventListener('click', function(e) {
-    if (!document.getElementById('search-wrap').contains(e.target)) {
-      searchResults.classList.remove('active');
-    }
+  document.addEventListener('click', e => {
+    const sw = document.getElementById('search-wrap');
+    if (sw && !sw.contains(e.target)) searchResults.classList.remove('active');
   });
 }
 
 /* ═══════════════════════════════════════════
-   DOCUMENT PREVIEW
+   6. DOCUMENT PREVIEW MODAL (Feature 13)
    ═══════════════════════════════════════════ */
 function openPreview(docId, filename, ext) {
   document.getElementById('preview-filename').textContent = filename;
@@ -1172,14 +1093,13 @@ function openPreview(docId, filename, ext) {
   img.style.display   = 'none';
   unsup.classList.add('d-none');
 
-  const url = '/preview/' + docId;
   dlLink.href = '/download/' + docId;
 
   if (ext === 'pdf') {
-    frame.src = url;
+    frame.src = '/preview/' + docId;
     frame.style.display = 'block';
   } else if (['jpg','jpeg','png'].includes(ext)) {
-    img.src = url;
+    img.src = '/preview/' + docId;
     img.style.display = 'block';
   } else {
     unsup.classList.remove('d-none');
@@ -1188,57 +1108,51 @@ function openPreview(docId, filename, ext) {
 }
 
 /* ═══════════════════════════════════════════
-   CATEGORY FILTER
+   7. CATEGORY FILTER (Feature 9)
    ═══════════════════════════════════════════ */
 function filterByCategory(catId) {
-  const rows = document.querySelectorAll('#docs-table tbody tr');
-  rows.forEach(row => {
-    const rowCat = row.dataset.cat;
-    row.style.display = (catId === null || String(rowCat) === String(catId)) ? '' : 'none';
+  document.querySelectorAll('#docs-table tbody tr').forEach(row => {
+    row.style.display = (catId === null || String(row.dataset.cat) === String(catId)) ? '' : 'none';
   });
-  document.querySelectorAll('[id^="cat-filter-"]').forEach(btn => {
-    btn.className = 'btn btn-sm btn-light';
-  });
+  document.querySelectorAll('[id^="cat-filter-"]').forEach(btn => btn.className = 'btn btn-sm btn-light');
   const activeBtn = catId ? document.getElementById('cat-filter-' + catId) : document.getElementById('cat-filter-all');
   if (activeBtn) activeBtn.className = 'btn btn-sm btn-primary';
 }
 
 /* ═══════════════════════════════════════════
-   UPLOAD DRAG & DROP
+   8. DRAG & DROP UPLOAD (Feature 14/23)
    ═══════════════════════════════════════════ */
 const dropZone  = document.getElementById('drop-zone');
 const fileInput = document.getElementById('up-file');
 const uploadBtn = document.getElementById('upload-submit-btn');
 
 const iconMap = {
-  pdf:  { icon: 'bi-file-earmark-pdf-fill',   color: '#ef4444' },
-  jpg:  { icon: 'bi-file-earmark-image-fill',  color: '#10b981' },
-  jpeg: { icon: 'bi-file-earmark-image-fill',  color: '#10b981' },
-  png:  { icon: 'bi-file-earmark-image-fill',  color: '#10b981' },
+  pdf:  { icon:'bi-file-earmark-pdf-fill',  color:'#ef4444' },
+  jpg:  { icon:'bi-file-earmark-image-fill', color:'#10b981' },
+  jpeg: { icon:'bi-file-earmark-image-fill', color:'#10b981' },
+  png:  { icon:'bi-file-earmark-image-fill', color:'#10b981' },
 };
 
 function handleUploadFile(file) {
   if (!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
-  if (!['pdf','jpg','jpeg','png'].includes(ext)) {
-    showToast('Only PDF, JPG, or PNG files allowed.', 'danger'); return;
-  }
-  const meta = iconMap[ext] || { icon: 'bi-file-earmark-fill', color: '#64748b' };
-  document.getElementById('file-preview-icon').className = 'bi ' + meta.icon;
-  document.getElementById('file-preview-icon').style.color = meta.color;
-  document.getElementById('file-preview-icon').style.fontSize = '2rem';
+  if (!['pdf','jpg','jpeg','png'].includes(ext)) { showToast('Only PDF, JPG, or PNG files allowed.','danger'); return; }
+  const meta = iconMap[ext] || { icon:'bi-file-earmark-fill', color:'#64748b' };
+  document.getElementById('file-preview-icon').className  = 'bi ' + meta.icon;
+  document.getElementById('file-preview-icon').style.color     = meta.color;
+  document.getElementById('file-preview-icon').style.fontSize  = '2rem';
   document.getElementById('file-preview-name').textContent = file.name;
   document.getElementById('file-preview-size').textContent = formatBytes(file.size);
   document.getElementById('file-preview').classList.remove('d-none');
+  document.getElementById('drop-icon').className  = 'bi bi-check-circle-fill drop-icon';
   document.getElementById('drop-icon').style.color = 'var(--success)';
-  document.getElementById('drop-icon').className = 'bi bi-check-circle-fill drop-icon';
   if (uploadBtn) uploadBtn.disabled = false;
 }
 
 function clearUploadFile() {
   if (fileInput) fileInput.value = '';
   document.getElementById('file-preview').classList.add('d-none');
-  document.getElementById('drop-icon').className = 'bi bi-cloud-arrow-up drop-icon';
+  document.getElementById('drop-icon').className  = 'bi bi-cloud-arrow-up drop-icon';
   document.getElementById('drop-icon').style.color = '';
   if (uploadBtn) uploadBtn.disabled = true;
 }
@@ -1252,7 +1166,7 @@ function formatBytes(b) {
 if (fileInput) fileInput.addEventListener('change', () => handleUploadFile(fileInput.files[0]));
 
 if (dropZone) {
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
@@ -1272,41 +1186,37 @@ if (uploadForm) {
 }
 
 /* ═══════════════════════════════════════════
-   COPY FAMILY CODE
+   9. COPY FAMILY CODE (Feature 29)
    ═══════════════════════════════════════════ */
 function copyFamilyCode(code) {
-  navigator.clipboard.writeText(code).then(function() {
-    showToast('Family code copied to clipboard!', 'success');
-  });
+  navigator.clipboard.writeText(code).then(() => showToast('Family code copied to clipboard!', 'success'));
 }
 
 /* ═══════════════════════════════════════════
-   TOAST NOTIFICATIONS
+   10. TOAST NOTIFICATIONS (Feature 16)
    ═══════════════════════════════════════════ */
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
-  const icons = { success: 'bi-check-circle-fill', danger: 'bi-x-circle-fill', info: 'bi-info-circle-fill', warning: 'bi-exclamation-triangle-fill' };
-  const colors = { success: 'var(--success)', danger: 'var(--danger)', info: 'var(--primary)', warning: 'var(--warning)' };
-  const toast = document.createElement('div');
+  const icons  = { success:'bi-check-circle-fill', danger:'bi-x-circle-fill', info:'bi-info-circle-fill', warning:'bi-exclamation-triangle-fill' };
+  const colors = { success:'var(--success)', danger:'var(--danger)', info:'var(--primary)', warning:'var(--warning)' };
+  const toast  = document.createElement('div');
   toast.className = 'toast-item ' + type;
-  toast.innerHTML = `<i class="bi ${icons[type] || icons.info} toast-icon" style="color:${colors[type] || colors.info};"></i><span>${message}</span>`;
+  toast.innerHTML = `<i class="bi ${icons[type]||icons.info} toast-icon" style="color:${colors[type]||colors.info};"></i><span>${message}</span>`;
   container.appendChild(toast);
-  setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3500);
+  setTimeout(() => { toast.style.transition='opacity 0.4s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),400); }, 3500);
 }
 
-// Show flash messages as toasts after a short delay
+// Convert flash alerts to toasts
 document.querySelectorAll('.alert').forEach(el => {
-  const type = el.classList.contains('alert-success') ? 'success'
-             : el.classList.contains('alert-danger')  ? 'danger'
-             : el.classList.contains('alert-warning') ? 'warning' : 'info';
-  const text = el.textContent.trim().replace(/[×✕]/g, '').trim();
+  const type = el.classList.contains('alert-success')?'success': el.classList.contains('alert-danger')?'danger': el.classList.contains('alert-warning')?'warning':'info';
+  const text = el.textContent.trim().replace(/[×✕]/g,'').trim();
   setTimeout(() => showToast(text, type), 600);
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 4000);
+  setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 4000);
 });
 
 /* ═══════════════════════════════════════════
-   CATEGORY ICON PICKER
+   11. CATEGORY ICON PICKER (Feature 9)
    ═══════════════════════════════════════════ */
 function setIcon(ico) {
   const input = document.getElementById('icon-input');
@@ -1316,17 +1226,18 @@ function setIcon(ico) {
 }
 
 /* ═══════════════════════════════════════════
-   SECURITY
+   12. SECURITY (Feature 24)
    ═══════════════════════════════════════════ */
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U') || e.key === 'PrintScreen') e.preventDefault();
+  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key==='U') || e.key==='PrintScreen')
+    e.preventDefault();
 });
 document.addEventListener('visibilitychange', function() {
   const ov = document.getElementById('security-overlay');
   if (!ov) return;
-  if (document.visibilityState === 'hidden') { ov.style.display = 'flex'; document.body.style.filter = 'blur(10px)'; }
-  else { ov.style.display = 'none'; document.body.style.filter = ''; }
+  if (document.visibilityState === 'hidden') { ov.style.display='flex'; document.body.style.filter='blur(10px)'; }
+  else { ov.style.display='none'; document.body.style.filter=''; }
 });
 </script>
 {% endblock %}
