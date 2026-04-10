@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Family Finance — Home{% endblock %}
+
+{% block body %}
+<div class="hero-wrapper">
+    <!-- Theme toggle -->
+    <button class="theme-toggle-auth" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+        <i class="theme-icon bi bi-moon-stars-fill"></i>
+    </button>
+
+    <div class="hero-card">
+        <!-- Decorative blobs -->
+        <div style="position:absolute;top:-60px;right:-60px;width:180px;height:180px;border-radius:50%;
+                    background:radial-gradient(circle,rgba(37,99,235,0.15),transparent 70%);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-60px;left:-60px;width:160px;height:160px;border-radius:50%;
+                    background:radial-gradient(circle,rgba(96,165,250,0.12),transparent 70%);pointer-events:none;"></div>
+
+        <i class="bi bi-safe2-fill hero-icon"></i>
+
+        <h1 class="hero-title">
+            Family<span>Finance</span>
+        </h1>
+        <p class="hero-subtitle">
+            A secure, private vault for your family's vital financial documents — 
+            organized, role-based, and always accessible to the right people.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary px-4 py-2" id="home-login-btn">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-light px-4 py-2" id="home-register-btn">
+                <i class="bi bi-person-plus me-2"></i>Create Account
+            </a>
+        </div>
+
+        <div class="d-flex justify-content-center gap-4 mt-4 flex-wrap">
+            <div class="d-flex align-items-center gap-2" style="font-size:0.8rem;color:var(--text-muted);">
+                <i class="bi bi-shield-check-fill" style="color:var(--success);"></i>OTP-secured login
+            </div>
+            <div class="d-flex align-items-center gap-2" style="font-size:0.8rem;color:var(--text-muted);">
+                <i class="bi bi-people-fill" style="color:var(--primary);"></i>Family-based access
+            </div>
+            <div class="d-flex align-items-center gap-2" style="font-size:0.8rem;color:var(--text-muted);">
+                <i class="bi bi-lock-fill" style="color:var(--warning);"></i>Permission control
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

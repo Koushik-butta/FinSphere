@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Register — Family Finance{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+    <a href="{{ url_for('auth.index') }}" class="back-home">
+        <i class="bi bi-arrow-left"></i> Home
+    </a>
+    <button class="theme-toggle-auth" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+        <i class="theme-icon bi bi-moon-stars-fill"></i>
+    </button>
+
+    <div class="auth-card" style="max-width:500px;">
+        <div class="text-center mb-4">
+            <i class="bi bi-person-plus-fill auth-icon"></i>
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join your family finance network</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-info-circle me-1"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('auth.register') }}" method="POST" id="register-form">
+            <div class="mb-3">
+                <label for="name" class="form-label">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="name" name="name"
+                           placeholder="John Doe" required autocomplete="name">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" name="email"
+                           placeholder="name@example.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Min. 6 characters" minlength="6" required
+                           oninput="checkStrength(this.value)">
+                    <button type="button" class="btn btn-light border" id="toggle-pw"
+                            style="border-radius:0 12px 12px 0 !important;border-left:none !important;"
+                            onclick="togglePasswordVis('password','toggle-pw-icon')" aria-label="Show password">
+                        <i class="bi bi-eye" id="toggle-pw-icon"></i>
+                    </button>
+                </div>
+                <div class="strength-bar mt-1">
+                    <div class="strength-fill" id="strengthFill" style="width:0%;"></div>
+                </div>
+                <small id="strengthLabel" class="form-text"></small>
+            </div>
+            <div class="mb-3">
+                <label for="role" class="form-label">Account Role</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                    <select class="form-select" id="role" name="role" required onchange="handleRoleChange()">
+                        <option value="admin">Admin — Create New Family Group</option>
+                        <option value="member">Member — Join Existing Family</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-4" id="familyCodeWrapper">
+                <label for="family_code" class="form-label" id="familyCodeLabel">Family Code</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-shield-lock-fill"></i></span>
+                    <input type="text" class="form-control text-uppercase" id="family_code" name="family_code"
+                           placeholder="e.g. SMITH123" required maxlength="12">
+                </div>
+                <div class="form-text mt-1" id="familyCodeHint">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span id="familyCodeDesc">Admin: choose a unique code your family members will use to join.</span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 mb-3" id="register-submit-btn">
+                <i class="bi bi-check-circle me-2"></i>Register Now
+            </button>
+        </form>
+
+        <div class="text-center">
+            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">
+                Already have an account?
+                <a href="{{ url_for('auth.login') }}" class="fw-bold text-decoration-none"
+                   style="color:var(--primary);">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePasswordVis(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+
+function handleRoleChange() {
+    const role  = document.getElementById('role').value;
+    const label = document.getElementById('familyCodeLabel');
+    const desc  = document.getElementById('familyCodeDesc');
+    const input = document.getElementById('family_code');
+    if (role === 'admin') {
+        label.textContent = 'Family Code (create unique)';
+        desc.textContent  = 'Choose a unique code for your family. Share it with members so they can join.';
+        input.placeholder = 'e.g. SMITH123';
+    } else {
+        label.textContent = 'Family Code (enter admin's code)';
+        desc.textContent  = 'Enter the family code provided by your admin to link your account.';
+        input.placeholder = 'Enter admin's code';
+    }
+}
+
+function checkStrength(val) {
+    const fill  = document.getElementById('strengthFill');
+    const label = document.getElementById('strengthLabel');
+    let score = 0;
+    if (val.length >= 6)  score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+        { w:'20%', c:'#ef4444', t:'Very weak' },
+        { w:'40%', c:'#f97316', t:'Weak' },
+        { w:'60%', c:'#eab308', t:'Fair' },
+        { w:'80%', c:'#22c55e', t:'Good' },
+        { w:'100%',c:'#15803d', t:'Strong ✓' },
+    ];
+    const l = levels[Math.max(0, score - 1)] || levels[0];
+    fill.style.width      = val.length ? l.w : '0%';
+    fill.style.background = l.c;
+    label.textContent     = val.length ? l.t : '';
+    label.style.color     = l.c;
+}
+
+document.getElementById('register-form').addEventListener('submit', function() {
+    const btn = document.getElementById('register-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering…';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Verify OTP — Family Finance{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+    <button class="theme-toggle-auth" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+        <i class="theme-icon bi bi-moon-stars-fill"></i>
+    </button>
+
+    <div class="auth-card" style="max-width:420px;">
+        <div class="text-center mb-4">
+            <i class="bi bi-envelope-open-fill auth-icon"></i>
+            <h2 class="auth-title">Check Your Email</h2>
+            <p class="auth-subtitle">We've sent a 6-digit verification code to your email</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-info-circle me-1"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Countdown -->
+        <div class="text-center mb-4">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(245,158,11,0.1);
+                        border:1px solid rgba(245,158,11,0.3);border-radius:50px;padding:0.4rem 1.1rem;
+                        font-size:0.85rem;font-weight:600;color:var(--warning);">
+                <i class="bi bi-clock"></i>
+                Expires in <span id="otp-countdown" style="font-weight:800;">5:00</span>
+            </div>
+        </div>
+
+        <form action="{{ url_for('auth.verify_otp') }}" method="POST" id="otp-form">
+            <div class="mb-4">
+                <label for="otp" class="form-label text-center d-block">Enter OTP Code</label>
+                <input type="text" class="form-control otp-input" id="otp" name="otp"
+                       placeholder="• • • • • •" maxlength="6" pattern="\d{6}"
+                       title="Enter the 6-digit OTP sent to your email" required autofocus
+                       inputmode="numeric">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 mb-3" id="otp-submit-btn">
+                <i class="bi bi-shield-check me-2"></i>Verify &amp; Continue
+            </button>
+        </form>
+
+        <div class="text-center">
+            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">
+                <a href="{{ url_for('auth.login') }}" class="fw-bold text-decoration-none text-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Return to Login
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// OTP input — allow only digits, auto-format
+const otpInput = document.getElementById('otp');
+otpInput.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    if (this.value.length === 6) {
+        document.getElementById('otp-submit-btn').classList.add('btn-success');
+        document.getElementById('otp-submit-btn').classList.remove('btn-primary');
+    } else {
+        document.getElementById('otp-submit-btn').classList.remove('btn-success');
+        document.getElementById('otp-submit-btn').classList.add('btn-primary');
+    }
+});
+
+// Countdown timer
+(function() {
+    let secs = 300;
+    const el = document.getElementById('otp-countdown');
+    const interval = setInterval(function() {
+        secs--;
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        el.textContent = m + ':' + String(s).padStart(2, '0');
+        if (secs <= 0) {
+            clearInterval(interval);
+            el.textContent = '0:00';
+            el.parentElement.style.color = '#ef4444';
+            el.parentElement.style.borderColor = 'rgba(239,68,68,0.4)';
+            el.parentElement.style.background = 'rgba(239,68,68,0.08)';
+        }
+    }, 1000);
+})();
+
+document.getElementById('otp-form').addEventListener('submit', function() {
+    const btn = document.getElementById('otp-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying…';
+});
+</script>
+{% endblock %}
