@@ -1,9 +1,9 @@
-SECRET_KEY = 'smart_family_finance_secret_key'
-UPLOAD_FOLDER = 'uploads'
-DB_FILE = 'database.db'
+import os
 
-# Email SMTP settings for OTP (update with your valid account/api/app-password)
-SMTP_SERVER = 'smtp.gmail.com'
-SMTP_PORT = 465
-SENDER_EMAIL = 'mbadri5025@gmail.com'
-SENDER_PASSWORD = 'dcme jfuh vjxn ddks'  # Replace with your actual app password
+SECRET_KEY    = os.environ.get('SECRET_KEY', 'smart_family_finance_secret_key_2024')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
+DB_FILE       = os.environ.get('DB_FILE', 'database.db')
+
+# Email is now handled via Brevo HTTP API.
+# Set BREVO_API_KEY and SENDER_EMAIL as environment variables in Render dashboard.
+# No SMTP settings needed.

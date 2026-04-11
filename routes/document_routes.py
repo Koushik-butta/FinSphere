@@ -319,8 +319,10 @@ def hard_delete(doc_id):
         flash('Document not found.', 'danger')
         return redirect(url_for('doc.dashboard'))
     try:
-        if os.path.exists(doc['filepath']):
-            os.remove(doc['filepath'])
+        # Only remove file from disk if it's a local path (not Cloudinary)
+        if doc['filepath'] and not doc['filepath'].startswith('http'):
+            if os.path.exists(doc['filepath']):
+                os.remove(doc['filepath'])
         delete_document(doc_id, soft=False)
         flash('Document permanently deleted.', 'success')
     except Exception as e:

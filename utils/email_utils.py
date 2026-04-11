@@ -1,12 +1,18 @@
 """
-HTML OTP email utility — professional branded templates.
-Sender name appears as: Family Finance System <email>
+OTP email utility — uses Brevo (Sendinblue) HTTP API.
+Render blocks outbound SMTP, so we use Brevo's REST API instead.
+Set BREVO_API_KEY as an environment variable in Render dashboard.
 """
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from config import SMTP_SERVER, SMTP_PORT, SENDER_EMAIL, SENDER_PASSWORD
+import os
+import json
+import urllib.request
+import urllib.error
+
+# Brevo API key — set this as an environment variable on Render
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+SENDER_EMAIL  = os.environ.get('SENDER_EMAIL', 'noreply@finsphere.app')
+SENDER_NAME   = 'FinSphere – Family Finance'
 
 
 # ── HTML Template Builder ────────────────────────────────────────────────────
@@ -18,7 +24,7 @@ def _build_html(otp: str, purpose: str, extra_note: str = '') -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Family Finance System — OTP</title>
+<title>FinSphere — OTP</title>
 </head>
 <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;
              background:#f0f4f8;color:#1e293b;">
@@ -35,20 +41,12 @@ def _build_html(otp: str, purpose: str, extra_note: str = '') -> str:
           <tr>
             <td style="background:linear-gradient(135deg,#0d47a1 0%,#1565c0 60%,#1976d2 100%);
                        padding:32px 40px;text-align:center;">
-              <table cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center">
-                    <span style="display:inline-flex;align-items:center;gap:10px;">
-                      <span style="font-size:28px;">🔐</span>
-                      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;
-                                 letter-spacing:-0.3px;">Family Finance System</h1>
-                    </span>
-                    <p style="margin:6px 0 0;color:rgba(255,255,255,0.75);font-size:13px;">
-                      Secure Document Management
-                    </p>
-                  </td>
-                </tr>
-              </table>
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;">
+                🔐 FinSphere
+              </h1>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,0.75);font-size:13px;">
+                Secure Family Document Management
+              </p>
             </td>
           </tr>
 
@@ -86,13 +84,12 @@ def _build_html(otp: str, purpose: str, extra_note: str = '') -> str:
                           border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:24px;">
                 <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
                   <strong>🚨 Security Notice:</strong> Do not share this OTP with anyone.
-                  Family Finance System will never ask for your OTP via call or chat.
+                  FinSphere will never ask for your OTP via call or chat.
                 </p>
               </div>
 
               <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
-                If you did not request this OTP, please ignore this email and ensure
-                your account is secure.
+                If you did not request this OTP, please ignore this email.
               </p>
             </td>
           </tr>
@@ -102,7 +99,7 @@ def _build_html(otp: str, purpose: str, extra_note: str = '') -> str:
             <td style="background:#f8fafc;border-top:1px solid #e2e8f0;
                        padding:20px 40px;text-align:center;">
               <p style="margin:0;font-size:13px;color:#94a3b8;">
-                — <strong style="color:#1e293b;">Family Finance System</strong> &nbsp;|&nbsp;
+                — <strong style="color:#1e293b;">FinSphere</strong> &nbsp;|&nbsp;
                 Secure &middot; Private &middot; Trusted
               </p>
               <p style="margin:6px 0 0;font-size:11px;color:#cbd5e1;">
@@ -127,51 +124,74 @@ def _build_plain(otp: str, purpose: str) -> str:
         f"  OTP: {otp}\n\n"
         f"This OTP is valid for 5 minutes.\n\n"
         f"Security Notice: Do not share this OTP with anyone.\n\n"
-        f"— Family Finance System"
+        f"— FinSphere"
     )
+
+
+# ── Brevo HTTP API Sender ────────────────────────────────────────────────────
+
+def _send_via_brevo(recipient: str, subject: str, html_body: str, text_body: str) -> bool:
+    """Send email via Brevo (Sendinblue) HTTP API — works on Render."""
+    if not BREVO_API_KEY:
+        print(f"[EMAIL] BREVO_API_KEY not set. Cannot send email to {recipient}.")
+        return False
+
+    payload = json.dumps({
+        "sender":      {"name": SENDER_NAME, "email": SENDER_EMAIL},
+        "to":          [{"email": recipient}],
+        "subject":     subject,
+        "htmlContent": html_body,
+        "textContent": text_body,
+    }).encode('utf-8')
+
+    req = urllib.request.Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=payload,
+        headers={
+            'accept':       'application/json',
+            'api-key':      BREVO_API_KEY,
+            'content-type': 'application/json',
+        },
+        method='POST'
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            status = resp.getcode()
+            if status in (200, 201):
+                print(f"[EMAIL] OTP sent to {recipient} via Brevo.")
+                return True
+            print(f"[EMAIL] Brevo returned status {status}")
+            return False
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        print(f"[EMAIL] Brevo HTTP error {e.code}: {body}")
+        return False
+    except Exception as e:
+        print(f"[EMAIL] Brevo send failed: {e}")
+        return False
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def send_otp_email(recipient: str, otp: str,
-                   subject: str = "Login Verification – Family Finance System",
+                   subject: str = "Login Verification – FinSphere",
                    purpose: str = "Login Verification",
                    extra_note: str = '') -> bool:
-    """
-    Send an HTML-formatted OTP email.
-    Sender display name: Family Finance System <sender_email>
-    """
-    try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From']    = f'Family Finance System <{SENDER_EMAIL}>'
-        msg['To']      = recipient
-
-        plain_part = MIMEText(_build_plain(otp, purpose), 'plain', 'utf-8')
-        html_part  = MIMEText(_build_html(otp, purpose, extra_note), 'html', 'utf-8')
-
-        msg.attach(plain_part)
-        msg.attach(html_part)
-
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, recipient, msg.as_string())
-
-        return True
-
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"[EMAIL] SMTP auth failed: {e}")
-        return False
-    except Exception as e:
-        print(f"[EMAIL] Failed to send OTP: {e}")
-        return False
+    html = _build_html(otp, purpose, extra_note)
+    text = _build_plain(otp, purpose)
+    ok   = _send_via_brevo(recipient, subject, html, text)
+    if not ok:
+        # Always log OTP so admin can retrieve it from Render logs if email fails
+        print(f"[OTP FALLBACK] {purpose} OTP for {recipient}: {otp}")
+    return ok
 
 
 def send_login_otp(recipient: str, otp: str) -> bool:
     return send_otp_email(
         recipient=recipient,
         otp=otp,
-        subject="Login Verification – Family Finance System",
+        subject="Login Verification – FinSphere",
         purpose="Login Verification",
     )
 
@@ -189,7 +209,7 @@ def send_reset_otp(recipient: str, otp: str) -> bool:
     return send_otp_email(
         recipient=recipient,
         otp=otp,
-        subject="Password Reset – Family Finance System",
+        subject="Password Reset – FinSphere",
         purpose="Password Reset Verification",
         extra_note=extra,
     )

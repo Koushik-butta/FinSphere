@@ -92,8 +92,10 @@ def login_user(email, password):
     conn.commit()
     conn.close()
 
-    if not send_login_otp(user['email'], otp):
-        return None
+    # Try to send email; if it fails, log OTP for admin visibility but continue
+    email_ok = send_login_otp(user['email'], otp)
+    if not email_ok:
+        print(f"[OTP FALLBACK] Login OTP for {user['email']}: {otp}  (email send failed)")
 
     return user
 
@@ -145,7 +147,10 @@ def forgot_password(email):
     conn.commit()
     conn.close()
 
-    return send_reset_otp(email, otp)
+    ok = send_reset_otp(email, otp)
+    if not ok:
+        print(f"[OTP FALLBACK] Reset OTP for {email}: {otp}  (email send failed)")
+    return True  # Always return True so UX isn't broken
 
 
 def reset_password(email, entered_otp, new_password):
