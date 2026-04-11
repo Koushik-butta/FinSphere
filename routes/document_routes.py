@@ -218,6 +218,9 @@ def preview(doc_id):
         return 'Access denied', 403
 
     try:
+        if doc['filepath'].startswith('http'):
+            return redirect(doc['filepath'])
+
         directory = os.path.abspath(UPLOAD_FOLDER)
         filename_on_disk = os.path.basename(doc['filepath'])
         ext = filename_on_disk.rsplit('.', 1)[-1].lower()
@@ -251,6 +254,13 @@ def download(doc_id):
         log_download(doc['id'], doc['filename'], user_id)
         log_activity(user_id, session['family_id'], 'download',
                      f'{session["name"]} downloaded {doc["filename"]}')
+
+        if doc['filepath'].startswith('http'):
+            cloudinary_url = doc['filepath']
+            if '/upload/' in cloudinary_url and 'fl_attachment' not in cloudinary_url:
+                cloudinary_url = cloudinary_url.replace('/upload/', '/upload/fl_attachment/')
+            return redirect(cloudinary_url)
+
         directory = os.path.abspath(UPLOAD_FOLDER)
         filename_on_disk = os.path.basename(doc['filepath'])
         return send_from_directory(directory, filename_on_disk,
