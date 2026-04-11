@@ -58,12 +58,11 @@ def dashboard():
 
     conn = get_db_connection()
 
-    # Family code (admin)
+    # Family code (everyone)
     family_code = None
-    if role == 'admin':
-        fam = conn.execute("SELECT family_code FROM families WHERE admin_id=?", (user_id,)).fetchone()
-        if fam:
-            family_code = fam['family_code']
+    fam = conn.execute("SELECT family_code FROM families WHERE id=?", (family_id,)).fetchone()
+    if fam:
+        family_code = fam['family_code']
 
     # Active documents with category info
     all_docs = conn.execute('''
@@ -86,13 +85,17 @@ def dashboard():
     # Admin-only data
     download_history   = []
     deleted_documents  = []
-    family_members     = []
     all_permissions    = {}
     categories         = []
     activity           = []
     storage            = {}
     analytics          = {}
     member_count       = 0
+    
+    # Family members (everyone)
+    family_members = conn.execute(
+        "SELECT id, name, email, role FROM users WHERE family_id=?", (family_id,)
+    ).fetchall()
 
     # Member count for everyone
     member_count = conn.execute(
@@ -120,10 +123,6 @@ def dashboard():
             WHERE d.family_id = ? AND d.is_deleted = 1
             ORDER BY d.upload_date DESC
         ''', (family_id,)).fetchall()
-
-        family_members = conn.execute(
-            "SELECT id, name, email, role FROM users WHERE family_id=?", (family_id,)
-        ).fetchall()
 
         all_permissions = get_all_permissions_for_family(family_id)
         activity  = get_recent_activity(family_id, limit=15)
@@ -256,10 +255,22 @@ def download(doc_id):
                      f'{session["name"]} downloaded {doc["filename"]}')
 
         if doc['filepath'].startswith('http'):
-            cloudinary_url = doc['filepath']
-            if '/upload/' in cloudinary_url and 'fl_attachment' not in cloudinary_url:
-                cloudinary_url = cloudinary_url.replace('/upload/', '/upload/fl_attachment/')
-            return redirect(cloudinary_url)
+            import urllib.request
+            import io
+            from flask import send_file
+            req = urllib.request.Request(doc['filepath'], headers={'User-Agent': 'Mozilla/5.0'})
+            try:
+                with urllib.request.urlopen(req) as response:
+                    file_data = response.read()
+                return send_file(
+                    io.BytesIO(file_data),
+                    as_attachment=True,
+                    download_name=doc['filename'],
+                    mimetype=response.headers.get('Content-Type', 'application/octet-stream')
+                )
+            except Exception as e:
+                flash('Error fetching remote file.', 'danger')
+                return redirect(url_for('doc.dashboard'))
 
         directory = os.path.abspath(UPLOAD_FOLDER)
         filename_on_disk = os.path.basename(doc['filepath'])
