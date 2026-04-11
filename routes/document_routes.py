@@ -1,5 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, session, url_for, send_from_directory, flash, jsonify
-from services.document_service import save_document, get_document, delete_document, restore_document, log_download
+"""
+Document routes — upload, preview, download, delete/restore, permissions, search, analytics.
+Uses psycopg2 (%s placeholders). Cloudinary-first storage (no local filesystem).
+"""
+
+import logging
+from flask import (Blueprint, render_template, request, redirect, session,
+                   url_for, flash, jsonify)
+from services.document_service import (save_document, get_document,
+                                       delete_document, restore_document, log_download)
 from services.permission_service import (
     get_family_members, can_user_view, can_user_download,
     get_all_permissions_for_family, bulk_set_permissions
@@ -7,16 +15,21 @@ from services.permission_service import (
 from services.activity_service import (
     log_activity, get_recent_activity, get_analytics, get_storage_info
 )
-from config import UPLOAD_FOLDER
-import os
 from database import get_db_connection
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, date
+import cloudinary
+import cloudinary.uploader
+
+logger = logging.getLogger(__name__)
 
 doc_bp = Blueprint('doc', __name__)
 
 ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
+MAX_EXPIRY_ALERT_DAYS = 30   # warn if doc expires within 30 days
 
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -47,6 +60,15 @@ def admin_required(f):
     return decorated
 
 
+def _days_until(expiry_date):
+    """Return integer days until expiry_date (a date object), or None."""
+    if not expiry_date:
+        return None
+    if isinstance(expiry_date, datetime):
+        expiry_date = expiry_date.date()
+    return (expiry_date - date.today()).days
+
+
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
 @doc_bp.route('/dashboard')
@@ -57,78 +79,108 @@ def dashboard():
     role      = session.get('role')
 
     conn = get_db_connection()
+    cur  = conn.cursor()
 
-    # Family code (everyone)
+    # ── Family code (ALL users) ───────────────────────────────────────────────
     family_code = None
-    fam = conn.execute("SELECT family_code FROM families WHERE id=?", (family_id,)).fetchone()
+    cur.execute("SELECT family_code FROM families WHERE id=%s", (family_id,))
+    fam = cur.fetchone()
     if fam:
         family_code = fam['family_code']
+    # Admin fallback: look up by admin_id if family_id somehow not set
+    if not family_code and role == 'admin':
+        cur.execute("SELECT family_code FROM families WHERE admin_id=%s", (user_id,))
+        fam = cur.fetchone()
+        if fam:
+            family_code = fam['family_code']
 
-    # Active documents with category info
-    all_docs = conn.execute('''
+    # ── Active documents with category info ───────────────────────────────────
+    cur.execute('''
         SELECT d.id, d.filename, d.description, d.upload_date,
                d.tags, d.file_size, d.category_id,
+               d.expiry_date, d.is_emergency,
                u.name AS user_name,
-               c.name AS category_name, c.icon AS category_icon, c.color AS category_color
+               c.name  AS category_name,
+               c.icon  AS category_icon,
+               c.color AS category_color
         FROM documents d
         JOIN users u ON d.uploaded_by = u.id
         LEFT JOIN categories c ON d.category_id = c.id
-        WHERE d.family_id = ? AND d.is_deleted = 0
+        WHERE d.family_id = %s AND d.is_deleted = 0
         ORDER BY d.upload_date DESC
-    ''', (family_id,)).fetchall()
+    ''', (family_id,))
+    all_docs = cur.fetchall()
 
     if role == 'member':
         documents = [doc for doc in all_docs if can_user_view(doc['id'], user_id, role)]
     else:
         documents = all_docs
 
-    # Admin-only data
-    download_history   = []
-    deleted_documents  = []
-    all_permissions    = {}
-    categories         = []
-    activity           = []
-    storage            = {}
-    analytics          = {}
-    member_count       = 0
-    
-    # Family members (everyone)
-    family_members = conn.execute(
-        "SELECT id, name, email, role FROM users WHERE family_id=?", (family_id,)
-    ).fetchall()
+    # ── Expiry alerts ─────────────────────────────────────────────────────────
+    expiry_alerts = []
+    for doc in documents:
+        days = _days_until(doc['expiry_date'])
+        if days is not None and 0 <= days <= MAX_EXPIRY_ALERT_DAYS:
+            expiry_alerts.append({
+                'id':       doc['id'],
+                'filename': doc['filename'],
+                'days':     days,
+                'urgent':   days <= 7,
+            })
+    expiry_alerts.sort(key=lambda x: x['days'])
 
-    # Member count for everyone
-    member_count = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM users WHERE family_id=?", (family_id,)
-    ).fetchone()['cnt']
+    # ── Emergency documents ───────────────────────────────────────────────────
+    emergency_docs = [d for d in documents if d.get('is_emergency')]
 
-    # Categories (everyone)
-    categories = conn.execute(
-        "SELECT * FROM categories WHERE family_id=? ORDER BY name", (family_id,)
-    ).fetchall()
+    # ── Member count ─────────────────────────────────────────────────────────
+    cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE family_id=%s", (family_id,))
+    member_count = cur.fetchone()['cnt']
+
+    # ── Categories ───────────────────────────────────────────────────────────
+    cur.execute("SELECT * FROM categories WHERE family_id=%s ORDER BY name", (family_id,))
+    categories = cur.fetchall()
+
+    # ── Admin-only data ───────────────────────────────────────────────────────
+    download_history  = []
+    deleted_documents = []
+    family_members    = []
+    all_permissions   = {}
+    activity          = []
+    storage           = {}
+    analytics         = {}
 
     if role == 'admin':
-        download_history = conn.execute('''
+        cur.execute('''
             SELECT dh.document_name, dh.download_time, u.name AS downloaded_by
             FROM download_history dh
             JOIN users u ON dh.downloaded_by = u.id
-            WHERE u.family_id = ?
+            WHERE u.family_id = %s
             ORDER BY dh.download_time DESC
-        ''', (family_id,)).fetchall()
+        ''', (family_id,))
+        download_history = cur.fetchall()
 
-        deleted_documents = conn.execute('''
+        cur.execute('''
             SELECT d.id, d.filename, d.upload_date, u.name AS user_name
             FROM documents d
             JOIN users u ON d.uploaded_by = u.id
-            WHERE d.family_id = ? AND d.is_deleted = 1
+            WHERE d.family_id = %s AND d.is_deleted = 1
             ORDER BY d.upload_date DESC
-        ''', (family_id,)).fetchall()
+        ''', (family_id,))
+        deleted_documents = cur.fetchall()
+
+        cur.execute("SELECT id, name, email, role FROM users WHERE family_id=%s", (family_id,))
+        family_members = cur.fetchall()
 
         all_permissions = get_all_permissions_for_family(family_id)
         activity  = get_recent_activity(family_id, limit=15)
         storage   = get_storage_info(family_id)
         analytics = get_analytics(family_id)
 
+    # ── Family members (ALL users) ────────────────────────────────────────────
+    cur.execute("SELECT id, name, email, role FROM users WHERE family_id=%s", (family_id,))
+    family_members = cur.fetchall()
+
+    cur.close()
     conn.close()
 
     return render_template(
@@ -146,6 +198,8 @@ def dashboard():
         storage=storage,
         analytics=analytics,
         member_count=member_count,
+        expiry_alerts=expiry_alerts,
+        emergency_docs=emergency_docs,
     )
 
 
@@ -156,9 +210,10 @@ def dashboard():
 def upload():
     family_id = session['family_id']
     conn = get_db_connection()
-    categories = conn.execute(
-        "SELECT * FROM categories WHERE family_id=? ORDER BY name", (family_id,)
-    ).fetchall()
+    cur  = conn.cursor()
+    cur.execute("SELECT * FROM categories WHERE family_id=%s ORDER BY name", (family_id,))
+    categories = cur.fetchall()
+    cur.close()
     conn.close()
 
     if request.method == 'POST':
@@ -172,6 +227,16 @@ def upload():
         category_id = request.form.get('category_id') or None
         tags        = request.form.get('tags', '').strip()
 
+        # Expiry date & emergency flag
+        expiry_date_str = request.form.get('expiry_date', '').strip()
+        expiry_date     = None
+        if expiry_date_str:
+            try:
+                expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                expiry_date = None
+        is_emergency = bool(request.form.get('is_emergency'))
+
         if file.filename == '':
             flash('No file selected.', 'danger')
             return redirect(request.url)
@@ -181,27 +246,40 @@ def upload():
             return redirect(request.url)
 
         original_filename = secure_filename(file.filename)
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        unique_filename = f"{timestamp}_{original_filename}"
-
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+        
         try:
-            file.save(filepath)
-            file_size = os.path.getsize(filepath)
-            save_document(user_id, family_id, original_filename, filepath,
-                          description, category_id, tags, file_size)
+            # Upload directly to Cloudinary
+            upload_result = cloudinary.uploader.upload(
+                file,
+                resource_type="auto",
+                use_filename=True,
+                unique_filename=True
+            )
+
+            secure_url = upload_result.get("secure_url")
+            file_size  = upload_result.get("bytes", 0)
+
+            save_document(
+                user_id, family_id, original_filename, secure_url,
+                description, category_id, tags, file_size,
+                expiry_date, is_emergency
+            )
             log_activity(user_id, family_id, 'upload',
                          f'{session["name"]} uploaded {original_filename}')
-            flash(f'Document "{original_filename}" uploaded successfully!', 'success')
+            logger.info(
+                "[UPLOAD] user=%s family=%s file=%s size=%s url=%s",
+                user_id, family_id, original_filename, file_size, secure_url
+            )
+            flash(f'Document "{original_filename}" uploaded successfully to Cloudinary!', 'success')
             return redirect(url_for('doc.dashboard'))
         except Exception as e:
-            flash(f'An error occurred while uploading: {str(e)}', 'danger')
+            logger.error("[UPLOAD] Cloudinary upload failed: %s", e)
+            flash(f'An error occurred while uploading to Cloudinary: {str(e)}', 'danger')
 
     return render_template('upload.html', name=session['name'], categories=categories)
 
 
-# ── Preview (inline) ──────────────────────────────────────────────────────────
+# ── Preview (open in new tab via Cloudinary) ──────────────────────────────────
 
 @doc_bp.route('/preview/<int:doc_id>')
 @login_required
@@ -216,20 +294,14 @@ def preview(doc_id):
     if not can_user_view(doc_id, user_id, role):
         return 'Access denied', 403
 
-    try:
-        if doc['filepath'].startswith('http'):
-            return redirect(doc['filepath'])
+    # All documents are now stored on Cloudinary — redirect directly.
+    filepath = doc.get('filepath', '')
+    if filepath and filepath.startswith('http'):
+        logger.info("[PREVIEW] user=%s doc=%s", user_id, doc_id)
+        return redirect(filepath)
 
-        directory = os.path.abspath(UPLOAD_FOLDER)
-        filename_on_disk = os.path.basename(doc['filepath'])
-        ext = filename_on_disk.rsplit('.', 1)[-1].lower()
-        mime_map = {'pdf': 'application/pdf', 'jpg': 'image/jpeg',
-                    'jpeg': 'image/jpeg', 'png': 'image/png'}
-        mimetype = mime_map.get(ext, 'application/octet-stream')
-        return send_from_directory(directory, filename_on_disk,
-                                   as_attachment=False, mimetype=mimetype)
-    except Exception:
-        return 'File not found', 404
+    # Fallback for any very old record with no Cloudinary URL
+    return 'File not available. Please re-upload this document.', 410
 
 
 # ── Download ──────────────────────────────────────────────────────────────────
@@ -253,30 +325,38 @@ def download(doc_id):
         log_download(doc['id'], doc['filename'], user_id)
         log_activity(user_id, session['family_id'], 'download',
                      f'{session["name"]} downloaded {doc["filename"]}')
+        logger.info(
+            "[DOWNLOAD] user=%s doc=%s file=%s",
+            user_id, doc_id, doc['filename']
+        )
 
-        if doc['filepath'].startswith('http'):
-            import urllib.request
+        # Proxy download through Flask so browser triggers Save dialog
+        # (Direct Cloudinary redirect opens file in browser for PDFs/images)
+        filepath = doc.get('filepath', '')
+        if filepath and filepath.startswith('http'):
+            import urllib.request as _req
             import io
             from flask import send_file
-            req = urllib.request.Request(doc['filepath'], headers={'User-Agent': 'Mozilla/5.0'})
             try:
-                with urllib.request.urlopen(req) as response:
-                    file_data = response.read()
+                rq = _req.Request(filepath, headers={'User-Agent': 'Mozilla/5.0'})
+                with _req.urlopen(rq, timeout=30) as resp:
+                    content_type = resp.headers.get('Content-Type', 'application/octet-stream')
+                    file_data = resp.read()
                 return send_file(
                     io.BytesIO(file_data),
                     as_attachment=True,
                     download_name=doc['filename'],
-                    mimetype=response.headers.get('Content-Type', 'application/octet-stream')
+                    mimetype=content_type,
                 )
-            except Exception as e:
-                flash('Error fetching remote file.', 'danger')
-                return redirect(url_for('doc.dashboard'))
+            except Exception as proxy_exc:
+                logger.error("[DOWNLOAD] Proxy failed: %s", proxy_exc)
+                # Last resort: redirect to URL directly
+                return redirect(filepath)
 
-        directory = os.path.abspath(UPLOAD_FOLDER)
-        filename_on_disk = os.path.basename(doc['filepath'])
-        return send_from_directory(directory, filename_on_disk,
-                                   as_attachment=True, download_name=doc['filename'])
-    except Exception:
+        flash('File is no longer available. Please ask the admin to re-upload it.', 'warning')
+        return redirect(url_for('doc.dashboard'))
+    except Exception as exc:
+        logger.error("[DOWNLOAD] Error: %s", exc)
         flash('Error fetching file.', 'danger')
         return redirect(url_for('doc.dashboard'))
 
@@ -319,13 +399,24 @@ def hard_delete(doc_id):
         flash('Document not found.', 'danger')
         return redirect(url_for('doc.dashboard'))
     try:
-        # Only remove file from disk if it's a local path (not Cloudinary)
-        if doc['filepath'] and not doc['filepath'].startswith('http'):
-            if os.path.exists(doc['filepath']):
-                os.remove(doc['filepath'])
+        # Delete from Cloudinary if it's a Cloudinary URL
+        filepath = doc.get('filepath', '')
+        if filepath and filepath.startswith('http') and 'cloudinary.com' in filepath:
+            try:
+                # Extract public_id from URL for Cloudinary deletion
+                parts    = filepath.rsplit('/', 1)
+                pub_id   = parts[-1].rsplit('.', 1)[0] if parts else None
+                if pub_id:
+                    cloudinary.uploader.destroy(pub_id, resource_type='auto')
+                    logger.info("[HARD-DELETE] Cloudinary asset deleted: %s", pub_id)
+            except Exception as cld_exc:
+                logger.warning("[HARD-DELETE] Cloudinary delete failed: %s", cld_exc)
+
+        # Wipe from PostgreSQL
         delete_document(doc_id, soft=False)
         flash('Document permanently deleted.', 'success')
     except Exception as e:
+        logger.error("[HARD-DELETE] Error: %s", e)
         flash(f'Error: {str(e)}', 'danger')
     return redirect(url_for('doc.dashboard') + '#recycle')
 
@@ -372,23 +463,28 @@ def api_search():
         return jsonify([])
 
     conn = get_db_connection()
-    rows = conn.execute('''
+    cur  = conn.cursor()
+    cur.execute('''
         SELECT d.id, d.filename, d.description, d.tags, u.name AS user_name
         FROM documents d
         JOIN users u ON d.uploaded_by = u.id
-        WHERE d.family_id=? AND d.is_deleted=0
-          AND (LOWER(d.filename) LIKE ? OR LOWER(d.description) LIKE ? OR LOWER(d.tags) LIKE ?)
+        WHERE d.family_id=%s AND d.is_deleted=0
+          AND (LOWER(d.filename) LIKE %s OR LOWER(d.description) LIKE %s OR LOWER(d.tags) LIKE %s)
         ORDER BY d.upload_date DESC LIMIT 10
-    ''', (family_id, f'%{q}%', f'%{q}%', f'%{q}%')).fetchall()
+    ''', (family_id, f'%{q}%', f'%{q}%', f'%{q}%'))
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
 
     results = []
     for r in rows:
         if role == 'admin' or can_user_view(r['id'], user_id, role):
             results.append({
-                'id': r['id'], 'filename': r['filename'],
-                'description': r['description'], 'user_name': r['user_name'],
-                'tags': r['tags'],
+                'id':          r['id'],
+                'filename':    r['filename'],
+                'description': r['description'],
+                'user_name':   r['user_name'],
+                'tags':        r['tags'],
             })
     return jsonify(results)
 

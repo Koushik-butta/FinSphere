@@ -1,8 +1,9 @@
 """
 Category routes — manage document categories (admin only).
+Uses psycopg2 (%s placeholders).
 """
 
-from flask import Blueprint, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, request, redirect, url_for, session, flash
 from database import get_db_connection
 
 cat_bp = Blueprint('cat', __name__)
@@ -25,7 +26,7 @@ def admin_required(f):
 @admin_required
 def create_category():
     name  = request.form.get('name', '').strip()
-    icon  = request.form.get('icon', 'bi-folder').strip() or 'bi-folder'
+    icon  = request.form.get('icon',  'bi-folder').strip() or 'bi-folder'
     color = request.form.get('color', '#2563eb').strip() or '#2563eb'
     fid   = session['family_id']
     uid   = session['user_id']
@@ -35,20 +36,22 @@ def create_category():
         return redirect(url_for('doc.dashboard') + '#categories')
 
     conn = get_db_connection()
-    exists = conn.execute(
-        'SELECT id FROM categories WHERE family_id=? AND LOWER(name)=?',
+    cur  = conn.cursor()
+    cur.execute(
+        'SELECT id FROM categories WHERE family_id=%s AND LOWER(name)=%s',
         (fid, name.lower())
-    ).fetchone()
-    if exists:
-        conn.close()
+    )
+    if cur.fetchone():
+        cur.close(); conn.close()
         flash(f'Category "{name}" already exists.', 'warning')
         return redirect(url_for('doc.dashboard') + '#categories')
 
-    conn.execute(
-        'INSERT INTO categories (name, icon, color, family_id, created_by) VALUES (?,?,?,?,?)',
+    cur.execute(
+        'INSERT INTO categories (name, icon, color, family_id, created_by) VALUES (%s,%s,%s,%s,%s)',
         (name, icon, color, fid, uid)
     )
     conn.commit()
+    cur.close()
     conn.close()
     flash(f'Category "{name}" created successfully.', 'success')
     return redirect(url_for('doc.dashboard') + '#categories')
@@ -57,17 +60,21 @@ def create_category():
 @cat_bp.route('/categories/delete/<int:cat_id>', methods=['POST'])
 @admin_required
 def delete_category(cat_id):
-    fid = session['family_id']
+    fid  = session['family_id']
     conn = get_db_connection()
-    cat = conn.execute('SELECT * FROM categories WHERE id=? AND family_id=?', (cat_id, fid)).fetchone()
+    cur  = conn.cursor()
+    cur.execute('SELECT * FROM categories WHERE id=%s AND family_id=%s', (cat_id, fid))
+    cat = cur.fetchone()
     if not cat:
-        conn.close()
+        cur.close(); conn.close()
         flash('Category not found.', 'danger')
         return redirect(url_for('doc.dashboard') + '#categories')
+
     # Unlink documents
-    conn.execute('UPDATE documents SET category_id=NULL WHERE category_id=?', (cat_id,))
-    conn.execute('DELETE FROM categories WHERE id=?', (cat_id,))
+    cur.execute('UPDATE documents SET category_id=NULL WHERE category_id=%s', (cat_id,))
+    cur.execute('DELETE FROM categories WHERE id=%s', (cat_id,))
     conn.commit()
+    cur.close()
     conn.close()
     flash(f'Category "{cat["name"]}" deleted.', 'success')
     return redirect(url_for('doc.dashboard') + '#categories')

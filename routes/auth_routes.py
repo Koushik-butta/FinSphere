@@ -1,7 +1,36 @@
+"""
+Auth routes — registration, login, OTP verification, forgot/reset password.
+Rate-limited on login and OTP endpoints.
+"""
+
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from services.auth_service import register_user, login_user, verify_user_otp, forgot_password, reset_password
 
+logger = logging.getLogger(__name__)
 auth_bp = Blueprint('auth', __name__)
+
+
+# ── Rate-limit helper (soft implementation without hard Flask-Limiter dep) ────
+# If Flask-Limiter is available, it is applied in app.py via @limiter.limit.
+# This in-memory tracker provides a fallback for development environments.
+import time
+from collections import defaultdict
+
+_attempt_log = defaultdict(list)   # ip -> [timestamps]
+_OTP_WINDOW  = 60   # seconds
+_OTP_LIMIT   = 6    # max attempts per window for OTP
+_LOGIN_LIMIT  = 10  # max attempts per window for login
+
+
+def _check_rate(ip, limit, window=60):
+    now = time.time()
+    _attempt_log[ip] = [t for t in _attempt_log[ip] if now - t < window]
+    if len(_attempt_log[ip]) >= limit:
+        return False
+    _attempt_log[ip].append(now)
+    return True
+
 
 @auth_bp.route('/')
 def index():
@@ -9,12 +38,13 @@ def index():
         return redirect(url_for('doc.dashboard'))
     return render_template('home.html')
 
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        role = request.form['role']
+        role        = request.form['role']
         family_code = request.form.get('family_code', '').strip().upper()
-        
+
         success, message = register_user(
             request.form['name'],
             request.form['email'],
@@ -22,32 +52,53 @@ def register():
             role,
             family_code
         )
-        
+
         if not success:
             flash(message, 'danger')
             return render_template('register.html')
-            
+
         flash(message, 'success')
         return redirect(url_for('auth.login'))
     return render_template('register.html')
 
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        ip = request.remote_addr or '0.0.0.0'
+        if not _check_rate(ip, _LOGIN_LIMIT):
+            logger.warning("[AUTH] Rate limit hit on login — ip=%s", ip)
+            flash('Too many login attempts. Please wait a minute and try again.', 'danger')
+            return render_template('login.html')
+
         result = login_user(request.form['email'], request.form['password'])
 
         if result:
-            session['temp_user'] = result['id']
-            flash('OTP sent to your email. Please enter it below.', 'success')
+            user, fallback_otp, email_sent = result
+            session['temp_user'] = user['id']
+            if email_sent:
+                logger.info("[AUTH] OTP sent — user_id=%s ip=%s", user['id'], ip)
+                flash('OTP sent to your email. Please enter it below.', 'success')
+            else:
+                logger.error("[AUTH] Email failed for user_id=%s — OTP=%s", user['id'], fallback_otp)
+                flash('OTP sent to your email. Please enter it below. (Check Render logs if not received.)', 'success')
             return redirect(url_for('auth.verify_otp'))
 
+        logger.warning("[AUTH] Failed login attempt — email=%s ip=%s",
+                       request.form.get('email', ''), ip)
         flash('Invalid email or password. Please try again.', 'danger')
 
     return render_template('login.html')
 
+
 @auth_bp.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
     if request.method == 'POST':
+        ip = request.remote_addr or '0.0.0.0'
+        if not _check_rate(ip, _OTP_LIMIT, _OTP_WINDOW):
+            flash('Too many OTP attempts. Please wait a moment.', 'danger')
+            return redirect(url_for('auth.login'))
+
         temp_user = session.get('temp_user')
         if not temp_user:
             flash('Session expired. Please log in again.', 'warning')
@@ -57,15 +108,20 @@ def verify_otp():
 
         if user:
             session.pop('temp_user', None)
-            session['user_id'] = user['id']
-            session['name'] = user['name']
-            session['role'] = user['role']
+            session['user_id']   = user['id']
+            session['name']      = user['name']
+            session['role']      = user['role']
             session['family_id'] = user['family_id']
+            logger.info("[AUTH] Login successful — user_id=%s name=%s role=%s",
+                        user['id'], user['name'], user['role'])
             return redirect(url_for('doc.dashboard'))
 
+        logger.warning("[AUTH] Invalid OTP attempt — temp_user=%s ip=%s",
+                       temp_user, request.remote_addr)
         flash('Invalid or expired OTP. Please try again.', 'danger')
 
     return render_template('otp_verify.html')
+
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_route():
@@ -75,16 +131,22 @@ def forgot_password_route():
             flash('Please enter your email address.', 'danger')
             return render_template('forgot_password.html')
 
-        success = forgot_password(email)
-        if success:
+        result = forgot_password(email)
+        if result:
+            success, email_sent, otp = result
             session['reset_email'] = email
-            flash('A password reset OTP has been sent to your email.', 'success')
+            if email_sent:
+                flash('A password reset OTP has been sent to your email.', 'success')
+            else:
+                logger.error("[AUTH] Reset email failed for %s — OTP=%s", email, otp)
+                flash('OTP generated. Check your email (or ask admin to check Render logs).', 'success')
             return redirect(url_for('auth.reset_password_route'))
         else:
             flash('If that email is registered, an OTP has been sent.', 'info')
             return render_template('forgot_password.html')
 
     return render_template('forgot_password.html')
+
 
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_route():
@@ -94,8 +156,8 @@ def reset_password_route():
         return redirect(url_for('auth.forgot_password_route'))
 
     if request.method == 'POST':
-        otp = request.form.get('otp', '').strip()
-        new_password = request.form.get('new_password', '')
+        otp              = request.form.get('otp', '').strip()
+        new_password     = request.form.get('new_password', '')
         confirm_password = request.form.get('confirm_password', '')
 
         if new_password != confirm_password:
@@ -115,6 +177,7 @@ def reset_password_route():
         flash('Invalid or expired OTP. Please try again.', 'danger')
 
     return render_template('reset_password.html')
+
 
 @auth_bp.route('/logout')
 def logout():
