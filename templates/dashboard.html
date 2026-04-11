@@ -4,15 +4,42 @@
 {% block head_extra %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-/* ── Modal theming ── */
-.modal-content { background: var(--surface-solid) !important; border: 1px solid var(--border) !important; border-radius: 18px !important; color: var(--text) !important; }
-.modal-header, .modal-footer { border-color: var(--border) !important; }
-.modal-title { color: var(--text) !important; font-weight: 700; }
-[data-theme="dark"] .modal-content .btn-close { filter: invert(1); }
+  /* ── Modal theming ── */
+  .modal-content {
+    background: var(--surface-solid) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+    color: var(--text) !important;
+  }
 
-/* ── iframe preview ── */
-#preview-frame { width:100%; height:75vh; border:none; }
-#preview-img   { display:block; max-width:100%; max-height:75vh; margin:auto; padding:1rem; }
+  .modal-header,
+  .modal-footer {
+    border-color: var(--border) !important;
+  }
+
+  .modal-title {
+    color: var(--text) !important;
+    font-weight: 700;
+  }
+
+  [data-theme="dark"] .modal-content .btn-close {
+    filter: invert(1);
+  }
+
+  /* ── iframe preview ── */
+  #preview-frame {
+    width: 100%;
+    height: 75vh;
+    border: none;
+  }
+
+  #preview-img {
+    display: block;
+    max-width: 100%;
+    max-height: 75vh;
+    margin: auto;
+    padding: 1rem;
+  }
 </style>
 {% endblock %}
 
@@ -93,7 +120,8 @@
       <!-- Global Search -->
       <div class="topbar-search" id="search-wrap">
         <i class="bi bi-search search-icon"></i>
-        <input type="text" id="global-search" placeholder="Search documents, tags…" autocomplete="off" aria-label="Global search">
+        <input type="text" id="global-search" placeholder="Search documents, tags…" autocomplete="off"
+          aria-label="Global search">
         <div class="search-results" id="search-results"></div>
       </div>
 
@@ -104,7 +132,8 @@
 
         <!-- Profile Dropdown -->
         <div class="profile-dropdown" id="profile-dropdown">
-          <div class="profile-trigger" id="profile-trigger" onclick="toggleProfileMenu()" role="button" aria-haspopup="true">
+          <div class="profile-trigger" id="profile-trigger" onclick="toggleProfileMenu()" role="button"
+            aria-haspopup="true">
             <div class="profile-avatar">{{ name[0]|upper }}</div>
             <div class="d-none d-sm-block">
               <div class="profile-name">{{ name }}</div>
@@ -134,14 +163,14 @@
 
       <!-- Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
-            <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-          {% endfor %}
-        {% endif %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+      {% endif %}
       {% endwith %}
 
       <!-- ══════════════════════════════════════════
@@ -157,16 +186,21 @@
                 <h4><i class="bi bi-hand-wave me-2"></i>Welcome back, {{ name }}!</h4>
                 <p>
                   {% if role == 'admin' %}
-                    You have <strong>{{ documents|length }}</strong> active documents and <strong>{{ member_count }}</strong> family member{{ 's' if member_count != 1 }}.
+                  You have <strong>{{ documents|length }}</strong> active documents and <strong>{{ member_count
+                    }}</strong> family member{{ 's' if member_count != 1 }}.
                   {% else %}
-                    You have access to <strong>{{ documents|length }}</strong> shared document{{ 's' if documents|length != 1 }}.
+                  You have access to <strong>{{ documents|length }}</strong> shared document{{ 's' if documents|length
+                  != 1 }}.
                   {% endif %}
                 </p>
               </div>
               {% if role == 'admin' and family_code %}
               <div style="position:relative;z-index:1;">
-                <p style="font-size:0.7rem;opacity:0.8;text-transform:uppercase;font-weight:700;margin-bottom:0.3rem;letter-spacing:0.5px;">Family Code</p>
-                <div class="family-code-pill" id="code-pill" onclick="copyFamilyCode('{{ family_code }}')" title="Click to copy">
+                <p
+                  style="font-size:0.7rem;opacity:0.8;text-transform:uppercase;font-weight:700;margin-bottom:0.3rem;letter-spacing:0.5px;">
+                  Family Code</p>
+                <div class="family-code-pill" id="code-pill" onclick="copyFamilyCode('{{ family_code }}')"
+                  title="Click to copy">
                   <i class="bi bi-link-45deg"></i>{{ family_code }}
                 </div>
                 <p style="font-size:0.68rem;opacity:0.6;margin-top:0.25rem;">Click to copy &amp; share</p>
@@ -238,25 +272,35 @@
             <div class="card-head">
               <h5><i class="bi bi-bar-chart-line-fill"></i> 7-Day Activity</h5>
               <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--text-muted);">
-                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:4px;"></span>Uploads</span>
-                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:4px;"></span>Downloads</span>
+                <span><span
+                    style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:4px;"></span>Uploads</span>
+                <span><span
+                    style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:4px;"></span>Downloads</span>
               </div>
             </div>
             <div class="card-body">
               <div class="chart-wrap"><canvas id="activityChart" aria-label="Activity chart"></canvas></div>
               <div class="d-flex gap-3 mt-3 flex-wrap">
-                <div style="flex:1;min-width:120px;background:var(--sb-active);border-radius:10px;padding:0.7rem 0.85rem;">
-                  <div style="font-size:1.4rem;font-weight:900;color:var(--primary);">{{ analytics.up_today or 0 }}</div>
+                <div
+                  style="flex:1;min-width:120px;background:var(--sb-active);border-radius:10px;padding:0.7rem 0.85rem;">
+                  <div style="font-size:1.4rem;font-weight:900;color:var(--primary);">{{ analytics.up_today or 0 }}
+                  </div>
                   <div style="font-size:0.75rem;color:var(--text-muted);">Uploads today</div>
                 </div>
-                <div style="flex:1;min-width:120px;background:rgba(16,185,129,0.1);border-radius:10px;padding:0.7rem 0.85rem;">
-                  <div style="font-size:1.4rem;font-weight:900;color:var(--success);">{{ analytics.dl_today or 0 }}</div>
+                <div
+                  style="flex:1;min-width:120px;background:rgba(16,185,129,0.1);border-radius:10px;padding:0.7rem 0.85rem;">
+                  <div style="font-size:1.4rem;font-weight:900;color:var(--success);">{{ analytics.dl_today or 0 }}
+                  </div>
                   <div style="font-size:0.75rem;color:var(--text-muted);">Downloads today</div>
                 </div>
                 {% if analytics.top_doc %}
-                <div style="flex:2;min-width:160px;background:rgba(245,158,11,0.08);border-radius:10px;padding:0.7rem 0.85rem;">
-                  <div style="font-size:0.75rem;font-weight:700;color:var(--warning);margin-bottom:2px;">MOST ACCESSED</div>
-                  <div style="font-size:0.85rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ analytics.top_doc.filename }}</div>
+                <div
+                  style="flex:2;min-width:160px;background:rgba(245,158,11,0.08);border-radius:10px;padding:0.7rem 0.85rem;">
+                  <div style="font-size:0.75rem;font-weight:700;color:var(--warning);margin-bottom:2px;">MOST ACCESSED
+                  </div>
+                  <div
+                    style="font-size:0.85rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ analytics.top_doc.filename }}</div>
                 </div>
                 {% endif %}
               </div>
@@ -265,7 +309,9 @@
           {% else %}
           <!-- Member: Recent Docs -->
           <div class="glass-card">
-            <div class="card-head"><h5><i class="bi bi-clock-history"></i> Recent Documents</h5></div>
+            <div class="card-head">
+              <h5><i class="bi bi-clock-history"></i> Recent Documents</h5>
+            </div>
             <div class="card-body p-0">
               {% if documents[:5] %}
               <div class="table-responsive">
@@ -278,17 +324,25 @@
                       {% else %}<i class="bi bi-file-earmark-image-fill me-2" style="color:#10b981;"></i>{% endif %}
                       {{ doc['filename'] }}
                     </td>
-                    <td class="pe-4 text-end">
-                      <a href="{{ url_for('doc.download', doc_id=doc['id']) }}" class="btn btn-success btn-sm px-3">
-                        <i class="bi bi-download me-1"></i>Download
-                      </a>
+                    <td class="pe-4">
+                      <div class="d-flex gap-1 justify-content-end">
+                        <button class="btn btn-outline-primary btn-sm px-2"
+                          onclick="openPreview({{ doc['id'] }}, '{{ doc['filename'] }}', '{{ ext }}')"
+                          title="Preview"><i class="bi bi-eye"></i></button>
+                        <a href="{{ url_for('doc.download', doc_id=doc['id']) }}" class="btn btn-success btn-sm px-2"
+                          title="Download">
+                          <i class="bi bi-download"></i>
+                        </a>
+                      </div>
                     </td>
                   </tr>
                   {% endfor %}
                 </table>
               </div>
               {% else %}
-              <div class="empty-state"><i class="bi bi-inbox"></i><h6>No documents yet</h6></div>
+              <div class="empty-state"><i class="bi bi-inbox"></i>
+                <h6>No documents yet</h6>
+              </div>
               {% endif %}
             </div>
           </div>
@@ -305,13 +359,15 @@
                 <span style="font-size:0.8rem;color:var(--text-muted);">{{ storage.get('pct', 0) }}% used</span>
               </div>
               <div class="card-body">
-                <div class="d-flex justify-content-between" style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem;">
+                <div class="d-flex justify-content-between"
+                  style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem;">
                   <span>{{ storage.get('used_fmt', '0 B') }}</span>
                   <span>{{ storage.get('cap_fmt', '1 GB') }}</span>
                 </div>
                 <div class="storage-bar-track">
-                  <div class="storage-bar-fill{% if storage.get('pct',0) > 80 %} danger{% elif storage.get('pct',0) > 60 %} warning{% endif %}"
-                       style="width:{{ storage.get('pct', 0) }}%;"></div>
+                  <div
+                    class="storage-bar-fill{% if storage.get('pct',0) > 80 %} danger{% elif storage.get('pct',0) > 60 %} warning{% endif %}"
+                    style="width:{{ storage.get('pct', 0) }}%;"></div>
                 </div>
                 <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;margin-bottom:0;">
                   <i class="bi bi-info-circle me-1"></i>{{ storage.get('cap_fmt', '1 GB') }} total family storage
@@ -321,7 +377,9 @@
 
             <!-- Activity Timeline -->
             <div class="glass-card" style="flex:1;overflow:hidden;">
-              <div class="card-head"><h5><i class="bi bi-activity"></i> Recent Activity</h5></div>
+              <div class="card-head">
+                <h5><i class="bi bi-activity"></i> Recent Activity</h5>
+              </div>
               <div class="card-body p-0" style="max-height:300px;overflow-y:auto;padding:0 1.25rem !important;">
                 {% if activity %}
                 <div class="activity-list">
@@ -363,7 +421,8 @@
           <div class="card-body" style="padding:2rem;">
             <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
               <i class="bi bi-info-circle-fill fs-5"></i>
-              <span style="font-size:0.85rem;">Uploaded documents are visible to all members with view permission. Manage permissions in the Permissions section.</span>
+              <span style="font-size:0.85rem;">Uploaded documents are visible to all members with view permission.
+                Manage permissions in the Permissions section.</span>
             </div>
             <form action="{{ url_for('doc.upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
               <div class="mb-3">
@@ -371,7 +430,7 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                   <input type="text" class="form-control" id="up-desc" name="description"
-                         placeholder="e.g. Mom's PAN Card, Family Insurance Policy" required>
+                    placeholder="e.g. Mom's PAN Card, Family Insurance Policy" required>
                 </div>
               </div>
               <div class="mb-3">
@@ -393,7 +452,7 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-tags"></i></span>
                   <input type="text" class="form-control" id="up-tags" name="tags"
-                         placeholder="e.g. bank, 2024, important">
+                    placeholder="e.g. bank, 2024, important">
                 </div>
               </div>
 
@@ -402,15 +461,23 @@
                 <label class="form-label">File</label>
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('up-file').click()">
                   <i class="bi bi-cloud-arrow-up drop-icon" id="drop-icon"></i>
-                  <p style="font-weight:600;color:var(--text-muted);margin-bottom:0.3rem;">Drag &amp; drop your file here</p>
-                  <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:0.75rem;">or <span style="color:var(--primary);font-weight:700;">click to browse</span></p>
-                  <span style="font-size:0.75rem;color:var(--text-light);background:var(--input-bg);padding:0.25rem 0.75rem;border-radius:50px;border:1px solid var(--border);">PDF, JPG, PNG &nbsp;·&nbsp; Max 16 MB</span>
-                  <input type="file" id="up-file" name="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" required>
+                  <p style="font-weight:600;color:var(--text-muted);margin-bottom:0.3rem;">Drag &amp; drop your file
+                    here</p>
+                  <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:0.75rem;">or <span
+                      style="color:var(--primary);font-weight:700;">click to browse</span></p>
+                  <span
+                    style="font-size:0.75rem;color:var(--text-light);background:var(--input-bg);padding:0.25rem 0.75rem;border-radius:50px;border:1px solid var(--border);">PDF,
+                    JPG, PNG &nbsp;·&nbsp; Max 16 MB</span>
+                  <input type="file" id="up-file" name="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none;"
+                    required>
                 </div>
                 <div class="file-preview-box d-none" id="file-preview">
-                  <i class="bi bi-file-earmark-fill" id="file-preview-icon" style="font-size:2rem;color:var(--primary);"></i>
+                  <i class="bi bi-file-earmark-fill" id="file-preview-icon"
+                    style="font-size:2rem;color:var(--primary);"></i>
                   <div style="flex:1;min-width:0;">
-                    <div id="file-preview-name" style="font-weight:600;font-size:0.9rem;color:var(--text);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"></div>
+                    <div id="file-preview-name"
+                      style="font-weight:600;font-size:0.9rem;color:var(--text);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">
+                    </div>
                     <div id="file-preview-size" style="font-size:0.8rem;color:var(--text-muted);"></div>
                   </div>
                   <button type="button" class="btn btn-light btn-sm" onclick="clearUploadFile()" title="Remove">
@@ -452,7 +519,7 @@
           <button class="btn btn-sm btn-primary" onclick="filterByCategory(null)" id="cat-filter-all">All</button>
           {% for cat in categories %}
           <button class="btn btn-sm btn-light" onclick="filterByCategory({{ cat['id'] }})"
-                  id="cat-filter-{{ cat['id'] }}" style="border-left:3px solid {{ cat['color'] }};">
+            id="cat-filter-{{ cat['id'] }}" style="border-left:3px solid {{ cat['color'] }};">
             <i class="bi {{ cat['icon'] }} me-1" style="color:{{ cat['color'] }};"></i>{{ cat['name'] }}
           </button>
           {% endfor %}
@@ -497,25 +564,26 @@
                     </td>
                     <td class="d-none d-md-table-cell">
                       {% if doc['tags'] %}
-                        {% for tag in doc['tags'].split(',') %}
-                          {% if tag.strip() %}<span class="tag-pill me-1">{{ tag.strip() }}</span>{% endif %}
-                        {% endfor %}
+                      {% for tag in doc['tags'].split(',') %}
+                      {% if tag.strip() %}<span class="tag-pill me-1">{{ tag.strip() }}</span>{% endif %}
+                      {% endfor %}
                       {% else %}—{% endif %}
                     </td>
                     <td class="d-none d-sm-table-cell" style="font-size:0.8rem;">{{ doc['user_name'] }}</td>
-                    <td class="d-none d-lg-table-cell" style="font-size:0.75rem;color:var(--text-muted);">{{ doc['upload_date'] }}</td>
+                    <td class="d-none d-lg-table-cell" style="font-size:0.75rem;color:var(--text-muted);">{{
+                      doc['upload_date'] }}</td>
                     <td class="pe-4">
                       <div class="d-flex gap-1 justify-content-end">
                         <button class="btn btn-outline-primary btn-sm px-2"
-                                onclick="openPreview({{ doc['id'] }}, '{{ doc['filename'] }}', '{{ ext }}')"
-                                title="Preview"><i class="bi bi-eye"></i></button>
-                        <a href="{{ url_for('doc.download', doc_id=doc['id']) }}"
-                           class="btn btn-success btn-sm px-2" title="Download">
+                          onclick="openPreview({{ doc['id'] }}, '{{ doc['filename'] }}', '{{ ext }}')"
+                          title="Preview"><i class="bi bi-eye"></i></button>
+                        <a href="{{ url_for('doc.download', doc_id=doc['id']) }}" class="btn btn-success btn-sm px-2"
+                          title="Download">
                           <i class="bi bi-download"></i>
                         </a>
                         {% if role == 'admin' %}
                         <form action="{{ url_for('doc.delete', doc_id=doc['id']) }}" method="POST" class="m-0"
-                              onsubmit="return confirm('Move «{{ doc['filename'] }}» to Recycle Bin?')">
+                          onsubmit="return confirm('Move «{{ doc['filename'] }}» to Recycle Bin?')">
                           <button type="submit" class="btn btn-outline-danger btn-sm px-2" title="Delete">
                             <i class="bi bi-trash3"></i>
                           </button>
@@ -532,7 +600,8 @@
             <div class="empty-state">
               <i class="bi bi-inbox"></i>
               <h6>No documents yet</h6>
-              <p>{% if role == 'admin' %}Upload your first document to get started.{% else %}No documents have been shared with you yet.{% endif %}</p>
+              <p>{% if role == 'admin' %}Upload your first document to get started.{% else %}No documents have been
+                shared with you yet.{% endif %}</p>
             </div>
             {% endif %}
           </div>
@@ -546,8 +615,8 @@
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-grid-3x3-gap-fill"></i> Document Categories</h1>
           {% if role == 'admin' %}
-          <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal"
-                  data-bs-target="#newCategoryModal" id="add-category-btn">
+          <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#newCategoryModal"
+            id="add-category-btn">
             <i class="bi bi-plus-lg me-1"></i>New Category
           </button>
           {% endif %}
@@ -563,7 +632,7 @@
             <div class="category-count">{{ doc_count }} document{{ 's' if doc_count != 1 }}</div>
             {% if role == 'admin' %}
             <form action="{{ url_for('cat.delete_category', cat_id=cat['id']) }}" method="POST" class="m-0"
-                  onsubmit="return confirm('Delete category «{{ cat['name'] }}»?')">
+              onsubmit="return confirm('Delete category «{{ cat['name'] }}»?')">
               <button type="submit" class="category-del" title="Delete category">
                 <i class="bi bi-x-circle"></i>
               </button>
@@ -576,15 +645,21 @@
         <div class="empty-state glass-card">
           <i class="bi bi-grid-3x3-gap"></i>
           <h6>No categories yet</h6>
-          <p>{% if role == 'admin' %}Create categories to organize your documents.{% else %}No categories have been set up yet.{% endif %}</p>
+          <p>{% if role == 'admin' %}Create categories to organize your documents.{% else %}No categories have been set
+            up yet.{% endif %}</p>
         </div>
         {% endif %}
 
         <div class="glass-card mt-4">
-          <div class="card-head"><h5><i class="bi bi-info-circle-fill"></i> Default Categories</h5></div>
+          <div class="card-head">
+            <h5><i class="bi bi-info-circle-fill"></i> Default Categories</h5>
+          </div>
           <div class="card-body">
             <div class="d-flex flex-wrap gap-3">
-              {% for item in [('bi-bank2','#2563eb','Bank Documents'),('bi-person-vcard-fill','#7c3aed','Personal Documents'),('bi-shield-fill-check','#059669','Insurance Documents'),('bi-mortarboard-fill','#d97706','Education Documents'),('bi-folder-fill','#64748b','Other Documents')] %}
+              {% for item in [('bi-bank2','#2563eb','Bank Documents'),('bi-person-vcard-fill','#7c3aed','Personal
+              Documents'),('bi-shield-fill-check','#059669','Insurance
+              Documents'),('bi-mortarboard-fill','#d97706','Education Documents'),('bi-folder-fill','#64748b','Other
+              Documents')] %}
               <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;color:var(--text-muted);">
                 <i class="bi {{ item[0] }}" style="color:{{ item[1] }};font-size:1.1rem;"></i>{{ item[2] }}
               </div>
@@ -601,8 +676,9 @@
         <div class="section-header">
           <h1 class="section-title"><i class="bi bi-people-fill"></i> Family Members</h1>
           {% if role == 'admin' and family_code %}
-          <div style="display:flex;align-items:center;gap:0.5rem;background:var(--sb-active);border-radius:10px;padding:0.4rem 0.9rem;font-size:0.82rem;color:var(--sb-active-text);font-weight:600;cursor:pointer;"
-               onclick="copyFamilyCode('{{ family_code }}')" title="Click to copy">
+          <div
+            style="display:flex;align-items:center;gap:0.5rem;background:var(--sb-active);border-radius:10px;padding:0.4rem 0.9rem;font-size:0.82rem;color:var(--sb-active-text);font-weight:600;cursor:pointer;"
+            onclick="copyFamilyCode('{{ family_code }}')" title="Click to copy">
             <i class="bi bi-link-45deg"></i>Share Code: {{ family_code }}
           </div>
           {% endif %}
@@ -644,63 +720,71 @@
         </div>
         <div class="alert alert-info mb-4">
           <i class="bi bi-info-circle-fill me-2"></i>
-          Control which family members can <strong>view</strong> or <strong>download</strong> each document. Unchecked = denied.
+          Control which family members can <strong>view</strong> or <strong>download</strong> each document. Unchecked =
+          denied.
         </div>
 
         {% if not documents %}
-        <div class="empty-state glass-card"><i class="bi bi-file-lock2"></i><h6>No documents to manage</h6><p>Upload documents first.</p></div>
+        <div class="empty-state glass-card"><i class="bi bi-file-lock2"></i>
+          <h6>No documents to manage</h6>
+          <p>Upload documents first.</p>
+        </div>
         {% elif not family_members or family_members|selectattr('role','equalto','member')|list|length == 0 %}
-        <div class="empty-state glass-card"><i class="bi bi-people"></i><h6>No members yet</h6><p>Share your family code so members can join.</p></div>
+        <div class="empty-state glass-card"><i class="bi bi-people"></i>
+          <h6>No members yet</h6>
+          <p>Share your family code so members can join.</p>
+        </div>
         {% else %}
-          {% set members_only = family_members|selectattr('role','equalto','member')|list %}
-          {% for doc in documents %}
-          <div class="glass-card mb-3">
-            <div class="card-head">
-              {% set ext = doc['filename'].rsplit('.',1)[-1].lower() %}
-              {% if ext == 'pdf' %}<i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.2rem;"></i>
-              {% else %}<i class="bi bi-file-earmark-image-fill" style="color:#10b981;font-size:1.2rem;"></i>{% endif %}
-              <h5 style="display:inline;margin-left:0.5rem;">{{ doc['filename'] }}</h5>
-              {% if doc['description'] %}<span style="font-size:0.8rem;color:var(--text-muted);margin-left:0.5rem;">— {{ doc['description'] }}</span>{% endif %}
-            </div>
-            <div class="card-body">
-              <form action="{{ url_for('doc.update_permissions', doc_id=doc['id']) }}" method="POST">
-                {% for member in members_only %}
-                {% set perm = all_permissions.get(doc['id'], {}).get(member['id'], {}) %}
-                {% set can_v = perm.get('can_view', True) %}
-                {% set can_d = perm.get('can_download', True) %}
-                <div class="perm-card">
-                  <div class="perm-member-name">
-                    <i class="bi bi-person-circle me-1" style="color:var(--primary);"></i>
-                    {{ member['name'] }}
-                    <span class="role-badge-member ms-1" style="font-size:0.65rem;">Member</span>
-                  </div>
-                  <div class="perm-checks">
-                    <div class="form-check perm-check">
-                      <input class="form-check-input" type="checkbox" name="view_{{ member['id'] }}"
-                             id="v_{{ doc['id'] }}_{{ member['id'] }}" {% if can_v %}checked{% endif %}>
-                      <label class="form-check-label" for="v_{{ doc['id'] }}_{{ member['id'] }}">
-                        <i class="bi bi-eye me-1"></i>View
-                      </label>
-                    </div>
-                    <div class="form-check perm-check">
-                      <input class="form-check-input" type="checkbox" name="download_{{ member['id'] }}"
-                             id="d_{{ doc['id'] }}_{{ member['id'] }}" {% if can_d %}checked{% endif %}>
-                      <label class="form-check-label" for="d_{{ doc['id'] }}_{{ member['id'] }}">
-                        <i class="bi bi-download me-1"></i>Download
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-                <div class="text-end mt-2">
-                  <button type="submit" class="btn btn-primary btn-sm px-4">
-                    <i class="bi bi-check-circle me-1"></i>Save
-                  </button>
-                </div>
-              </form>
-            </div>
+        {% set members_only = family_members|selectattr('role','equalto','member')|list %}
+        {% for doc in documents %}
+        <div class="glass-card mb-3">
+          <div class="card-head">
+            {% set ext = doc['filename'].rsplit('.',1)[-1].lower() %}
+            {% if ext == 'pdf' %}<i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.2rem;"></i>
+            {% else %}<i class="bi bi-file-earmark-image-fill" style="color:#10b981;font-size:1.2rem;"></i>{% endif %}
+            <h5 style="display:inline;margin-left:0.5rem;">{{ doc['filename'] }}</h5>
+            {% if doc['description'] %}<span style="font-size:0.8rem;color:var(--text-muted);margin-left:0.5rem;">— {{
+              doc['description'] }}</span>{% endif %}
           </div>
-          {% endfor %}
+          <div class="card-body">
+            <form action="{{ url_for('doc.update_permissions', doc_id=doc['id']) }}" method="POST">
+              {% for member in members_only %}
+              {% set perm = all_permissions.get(doc['id'], {}).get(member['id'], {}) %}
+              {% set can_v = perm.get('can_view', True) %}
+              {% set can_d = perm.get('can_download', True) %}
+              <div class="perm-card">
+                <div class="perm-member-name">
+                  <i class="bi bi-person-circle me-1" style="color:var(--primary);"></i>
+                  {{ member['name'] }}
+                  <span class="role-badge-member ms-1" style="font-size:0.65rem;">Member</span>
+                </div>
+                <div class="perm-checks">
+                  <div class="form-check perm-check">
+                    <input class="form-check-input" type="checkbox" name="view_{{ member['id'] }}"
+                      id="v_{{ doc['id'] }}_{{ member['id'] }}" {% if can_v %}checked{% endif %}>
+                    <label class="form-check-label" for="v_{{ doc['id'] }}_{{ member['id'] }}">
+                      <i class="bi bi-eye me-1"></i>View
+                    </label>
+                  </div>
+                  <div class="form-check perm-check">
+                    <input class="form-check-input" type="checkbox" name="download_{{ member['id'] }}"
+                      id="d_{{ doc['id'] }}_{{ member['id'] }}" {% if can_d %}checked{% endif %}>
+                    <label class="form-check-label" for="d_{{ doc['id'] }}_{{ member['id'] }}">
+                      <i class="bi bi-download me-1"></i>Download
+                    </label>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              <div class="text-end mt-2">
+                <button type="submit" class="btn btn-primary btn-sm px-4">
+                  <i class="bi bi-check-circle me-1"></i>Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
         {% endif %}
       </section>
 
@@ -730,15 +814,20 @@
                       <i class="bi bi-file-earmark-check-fill me-2" style="color:var(--success);"></i>
                       {{ dh['document_name'] }}
                     </td>
-                    <td><span class="role-badge-member"><i class="bi bi-person me-1"></i>{{ dh['downloaded_by'] }}</span></td>
-                    <td style="font-size:0.8rem;color:var(--text-muted);"><i class="bi bi-calendar3 me-1"></i>{{ dh['download_time'] }}</td>
+                    <td><span class="role-badge-member"><i class="bi bi-person me-1"></i>{{ dh['downloaded_by']
+                        }}</span></td>
+                    <td style="font-size:0.8rem;color:var(--text-muted);"><i class="bi bi-calendar3 me-1"></i>{{
+                      dh['download_time'] }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
             {% else %}
-            <div class="empty-state"><i class="bi bi-download"></i><h6>No downloads yet</h6><p>Download activity will appear here.</p></div>
+            <div class="empty-state"><i class="bi bi-download"></i>
+              <h6>No downloads yet</h6>
+              <p>Download activity will appear here.</p>
+            </div>
             {% endif %}
           </div>
         </div>
@@ -771,8 +860,10 @@
                       <i class="bi bi-file-earmark me-2" style="color:var(--text-light);"></i>
                       <del style="color:var(--text-muted);font-size:0.875rem;">{{ doc['filename'] }}</del>
                     </td>
-                    <td class="d-none d-sm-table-cell" style="font-size:0.85rem;color:var(--text-muted);">{{ doc['user_name'] }}</td>
-                    <td class="d-none d-md-table-cell" style="font-size:0.78rem;color:var(--text-muted);">{{ doc['upload_date'] }}</td>
+                    <td class="d-none d-sm-table-cell" style="font-size:0.85rem;color:var(--text-muted);">{{
+                      doc['user_name'] }}</td>
+                    <td class="d-none d-md-table-cell" style="font-size:0.78rem;color:var(--text-muted);">{{
+                      doc['upload_date'] }}</td>
                     <td class="pe-4">
                       <div class="d-flex gap-2 justify-content-end">
                         <form action="{{ url_for('doc.restore', doc_id=doc['id']) }}" method="POST" class="m-0">
@@ -781,7 +872,7 @@
                           </button>
                         </form>
                         <form action="{{ url_for('doc.hard_delete', doc_id=doc['id']) }}" method="POST" class="m-0"
-                              onsubmit="return confirm('Permanently delete this file? Cannot be undone.')">
+                          onsubmit="return confirm('Permanently delete this file? Cannot be undone.')">
                           <button type="submit" class="btn btn-danger btn-sm px-2" title="Permanently delete">
                             <i class="bi bi-trash-fill"></i>
                           </button>
@@ -812,8 +903,8 @@
 
 <!-- ── Floating Upload Button ─────────────── -->
 {% if role == 'admin' %}
-<a class="fab-upload" onclick="switchSection('upload-section'); return false;" href="#"
-   id="fab-btn" title="Upload Document">
+<a class="fab-upload" onclick="switchSection('upload-section'); return false;" href="#" id="fab-btn"
+  title="Upload Document">
   <i class="bi bi-cloud-upload-fill"></i>
   <span class="d-none d-sm-inline">Upload</span>
 </a>
@@ -852,7 +943,8 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-folder-plus me-2" style="color:var(--primary);"></i>Create New Category</h5>
+        <h5 class="modal-title"><i class="bi bi-folder-plus me-2" style="color:var(--primary);"></i>Create New Category
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="{{ url_for('cat.create_category') }}" method="POST">
@@ -865,12 +957,13 @@
             <label class="form-label">Icon (Bootstrap Icons class)</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-grid" id="icon-preview"></i></span>
-              <input type="text" class="form-control" name="icon" id="icon-input"
-                     placeholder="bi-folder" value="bi-folder"
-                     oninput="document.getElementById('icon-preview').className='bi '+this.value">
+              <input type="text" class="form-control" name="icon" id="icon-input" placeholder="bi-folder"
+                value="bi-folder" oninput="document.getElementById('icon-preview').className='bi '+this.value">
             </div>
             <div class="mt-2 d-flex flex-wrap gap-2">
-              {% for ico in ['bi-folder','bi-bank2','bi-person-vcard','bi-shield-check','bi-mortarboard','bi-house','bi-car-front','bi-briefcase','bi-heart-pulse','bi-globe'] %}
+              {% for ico in
+              ['bi-folder','bi-bank2','bi-person-vcard','bi-shield-check','bi-mortarboard','bi-house','bi-car-front','bi-briefcase','bi-heart-pulse','bi-globe']
+              %}
               <button type="button" class="btn btn-light btn-sm" onclick="setIcon('{{ ico }}')">
                 <i class="bi {{ ico }}"></i>
               </button>
@@ -880,7 +973,7 @@
           <div class="mb-3">
             <label class="form-label">Accent Color</label>
             <input type="color" class="form-control form-control-color" name="color" value="#2563eb"
-                   style="border-radius:10px;height:42px;">
+              style="border-radius:10px;height:42px;">
           </div>
         </div>
         <div class="modal-footer">
@@ -907,102 +1000,103 @@
 
 {% block scripts %}
 <script>
-/* ═══════════════════════════════════════════
-   1. SIDEBAR — Collapsible (Feature 6/21)
-   ═══════════════════════════════════════════ */
-const sidebar  = document.getElementById('sidebar');
-const mainWrap = document.getElementById('main-wrap');
-const overlay  = document.getElementById('sidebar-overlay');
-let collapsed  = localStorage.getItem('ff-sidebar') === '1';
+  /* ═══════════════════════════════════════════
+     1. SIDEBAR — Collapsible (Feature 6/21)
+     ═══════════════════════════════════════════ */
+  const sidebar = document.getElementById('sidebar');
+  const mainWrap = document.getElementById('main-wrap');
+  const overlay = document.getElementById('sidebar-overlay');
+  let collapsed = localStorage.getItem('ff-sidebar') === '1';
 
-function applySidebarState() {
-  if (window.innerWidth <= 768) {
-    sidebar.classList.remove('collapsed');
-    mainWrap.classList.remove('collapsed');
-    return;
+  function applySidebarState() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('collapsed');
+      mainWrap.classList.remove('collapsed');
+      return;
+    }
+    sidebar.classList.toggle('collapsed', collapsed);
+    mainWrap.classList.toggle('collapsed', collapsed);
   }
-  sidebar.classList.toggle('collapsed', collapsed);
-  mainWrap.classList.toggle('collapsed', collapsed);
-}
 
-function toggleSidebar() {
-  if (window.innerWidth <= 768) {
-    sidebar.classList.toggle('mobile-open');
-    overlay.classList.toggle('active');
-    return;
+  function toggleSidebar() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+      return;
+    }
+    collapsed = !collapsed;
+    localStorage.setItem('ff-sidebar', collapsed ? '1' : '0');
+    applySidebarState();
   }
-  collapsed = !collapsed;
-  localStorage.setItem('ff-sidebar', collapsed ? '1' : '0');
+
+  function closeMobileSidebar() {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+  }
+
   applySidebarState();
-}
+  window.addEventListener('resize', applySidebarState);
 
-function closeMobileSidebar() {
-  sidebar.classList.remove('mobile-open');
-  overlay.classList.remove('active');
-}
+  /* ═══════════════════════════════════════════
+     2. SECTION SWITCHING — SPA-like (Feature 7/20)
+     ═══════════════════════════════════════════ */
+  const navItems = document.querySelectorAll('.nav-item[data-section]');
+  const sections = document.querySelectorAll('.section[id^="section-"]');
+  const fab = document.getElementById('fab-btn');
 
-applySidebarState();
-window.addEventListener('resize', applySidebarState);
+  function switchSection(name) {
+    sections.forEach(s => s.classList.add('d-none'));
+    navItems.forEach(n => n.classList.remove('active'));
 
-/* ═══════════════════════════════════════════
-   2. SECTION SWITCHING — SPA-like (Feature 7/20)
-   ═══════════════════════════════════════════ */
-const navItems = document.querySelectorAll('.nav-item[data-section]');
-const sections = document.querySelectorAll('.section[id^="section-"]');
-const fab      = document.getElementById('fab-btn');
+    const target = document.getElementById('section-' + name);
+    if (target) {
+      target.classList.remove('d-none');
+      target.style.animation = 'none';
+      requestAnimationFrame(() => { target.style.animation = 'slideUp 0.3s ease-out both'; });
+    }
 
-function switchSection(name) {
-  sections.forEach(s => s.classList.add('d-none'));
-  navItems.forEach(n => n.classList.remove('active'));
+    const activeNav = document.getElementById('nav-' + name);
+    if (activeNav) activeNav.classList.add('active');
 
-  const target = document.getElementById('section-' + name);
-  if (target) {
-    target.classList.remove('d-none');
-    target.style.animation = 'none';
-    requestAnimationFrame(() => { target.style.animation = 'slideUp 0.3s ease-out both'; });
+    location.hash = name;
+    closeMobileSidebar();
+    if (fab) fab.style.display = (name === 'upload-section') ? 'none' : 'flex';
   }
 
-  const activeNav = document.getElementById('nav-' + name);
-  if (activeNav) activeNav.classList.add('active');
+  navItems.forEach(n => n.addEventListener('click', function (e) {
+    e.preventDefault();
+    switchSection(this.dataset.section);
+  }));
 
-  location.hash = name;
-  closeMobileSidebar();
-  if (fab) fab.style.display = (name === 'upload-section') ? 'none' : 'flex';
-}
+  // Deep-link via URL hash
+  (function () {
+    const hash = location.hash.replace('#', '');
+    const valid = ['overview', 'upload-section', 'documents', 'categories', 'members', 'permissions', 'history', 'recycle'];
+    if (hash && valid.includes(hash)) switchSection(hash);
+  })();
 
-navItems.forEach(n => n.addEventListener('click', function(e) {
-  e.preventDefault();
-  switchSection(this.dataset.section);
-}));
+  /* ═══════════════════════════════════════════
+     3. PROFILE DROPDOWN (Feature 25)
+     ═══════════════════════════════════════════ */
+  function toggleProfileMenu() {
+    document.getElementById('profile-menu').classList.toggle('open');
+  }
+  document.addEventListener('click', function (e) {
+    const dd = document.getElementById('profile-dropdown');
+    if (dd && !dd.contains(e.target)) document.getElementById('profile-menu').classList.remove('open');
+  });
 
-// Deep-link via URL hash
-(function() {
-  const hash  = location.hash.replace('#','');
-  const valid = ['overview','upload-section','documents','categories','members','permissions','history','recycle'];
-  if (hash && valid.includes(hash)) switchSection(hash);
-})();
-
-/* ═══════════════════════════════════════════
-   3. PROFILE DROPDOWN (Feature 25)
-   ═══════════════════════════════════════════ */
-function toggleProfileMenu() {
-  document.getElementById('profile-menu').classList.toggle('open');
-}
-document.addEventListener('click', function(e) {
-  const dd = document.getElementById('profile-dropdown');
-  if (dd && !dd.contains(e.target)) document.getElementById('profile-menu').classList.remove('open');
-});
-
-/* ═══════════════════════════════════════════
-   4. CHART.JS ANALYTICS (Feature 11/SaaS)
-   ═══════════════════════════════════════════ */
-{% if role == 'admin' and analytics %}
-(function() {
-  const labels    = {{ analytics.labels    | tojson }};
-  const uploads   = {{ analytics.uploads   | tojson }};
+  /* ═══════════════════════════════════════════
+     4. CHART.JS ANALYTICS (Feature 11/SaaS)
+     ═══════════════════════════════════════════ */
+  {% if role == 'admin' and analytics %}
+  (function () {
+    const labels = {{ analytics.labels    | tojson
+  }};
+  const uploads = {{ analytics.uploads   | tojson }};
   const downloads = {{ analytics.downloads | tojson }};
 
-  const isDark    = () => document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
   const gridColor = () => isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
   const textColor = () => isDark() ? '#94a3b8' : '#64748b';
 
@@ -1014,19 +1108,19 @@ document.addEventListener('click', function(e) {
     data: {
       labels,
       datasets: [
-        { label:'Uploads',   data:uploads,   backgroundColor:'rgba(37,99,235,0.7)', borderColor:'#2563eb', borderWidth:1, borderRadius:6 },
-        { label:'Downloads', data:downloads, backgroundColor:'rgba(16,185,129,0.65)', borderColor:'#10b981', borderWidth:1, borderRadius:6 },
+        { label: 'Uploads', data: uploads, backgroundColor: 'rgba(37,99,235,0.7)', borderColor: '#2563eb', borderWidth: 1, borderRadius: 6 },
+        { label: 'Downloads', data: downloads, backgroundColor: 'rgba(16,185,129,0.65)', borderColor: '#10b981', borderWidth: 1, borderRadius: 6 },
       ],
     },
     options: {
-      responsive:true, maintainAspectRatio:false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display:false },
-        tooltip: { backgroundColor: isDark()?'#0f1b3d':'#fff', titleColor: isDark()?'#e2e8f0':'#1e293b', bodyColor: isDark()?'#94a3b8':'#64748b', borderColor: isDark()?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.1)', borderWidth:1, cornerRadius:10 },
+        legend: { display: false },
+        tooltip: { backgroundColor: isDark() ? '#0f1b3d' : '#fff', titleColor: isDark() ? '#e2e8f0' : '#1e293b', bodyColor: isDark() ? '#94a3b8' : '#64748b', borderColor: isDark() ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)', borderWidth: 1, cornerRadius: 10 },
       },
       scales: {
-        x: { grid:{ color:gridColor() }, ticks:{ color:textColor(), font:{size:11} } },
-        y: { beginAtZero:true, ticks:{ precision:0, color:textColor(), font:{size:11} }, grid:{ color:gridColor() } },
+        x: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { size: 11 } } },
+        y: { beginAtZero: true, ticks: { precision: 0, color: textColor(), font: { size: 11 } }, grid: { color: gridColor() } },
       },
     },
   });
@@ -1037,207 +1131,207 @@ document.addEventListener('click', function(e) {
     chart.options.scales.x.ticks.color = textColor();
     chart.options.scales.y.ticks.color = textColor();
     chart.update();
-  }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
-})();
-{% endif %}
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}) ();
+  {% endif %}
 
-/* ═══════════════════════════════════════════
-   5. GLOBAL SEARCH (Feature 15)
-   ═══════════════════════════════════════════ */
-let searchTimer;
-const searchInput   = document.getElementById('global-search');
-const searchResults = document.getElementById('search-results');
+  /* ═══════════════════════════════════════════
+     5. GLOBAL SEARCH (Feature 15)
+     ═══════════════════════════════════════════ */
+  let searchTimer;
+  const searchInput = document.getElementById('global-search');
+  const searchResults = document.getElementById('search-results');
 
-if (searchInput) {
-  searchInput.addEventListener('input', function() {
-    clearTimeout(searchTimer);
-    const q = this.value.trim();
-    if (!q) { searchResults.classList.remove('active'); searchResults.innerHTML = ''; return; }
-    searchTimer = setTimeout(() => {
-      fetch('/api/search?q=' + encodeURIComponent(q))
-        .then(r => r.json())
-        .then(data => {
-          if (!data.length) {
-            searchResults.innerHTML = '<div class="search-result-item" style="color:var(--text-muted);">No results found.</div>';
-          } else {
-            searchResults.innerHTML = data.map(d => `
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      const q = this.value.trim();
+      if (!q) { searchResults.classList.remove('active'); searchResults.innerHTML = ''; return; }
+      searchTimer = setTimeout(() => {
+        fetch('/api/search?q=' + encodeURIComponent(q))
+          .then(r => r.json())
+          .then(data => {
+            if (!data.length) {
+              searchResults.innerHTML = '<div class="search-result-item" style="color:var(--text-muted);">No results found.</div>';
+            } else {
+              searchResults.innerHTML = data.map(d => `
               <div class="search-result-item" onclick="switchSection('documents')">
                 <i class="bi bi-file-earmark-text-fill" style="color:var(--primary);"></i>
                 <div>
                   <div style="font-weight:600;">${d.filename}</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted);">${d.description||''} ${d.tags?'· '+d.tags:''}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${d.description || ''} ${d.tags ? '· ' + d.tags : ''}</div>
                 </div>
               </div>`).join('');
-          }
-          searchResults.classList.add('active');
-        }).catch(() => {});
-    }, 350);
-  });
-  document.addEventListener('click', e => {
-    const sw = document.getElementById('search-wrap');
-    if (sw && !sw.contains(e.target)) searchResults.classList.remove('active');
-  });
-}
-
-/* ═══════════════════════════════════════════
-   6. DOCUMENT PREVIEW MODAL (Feature 13)
-   ═══════════════════════════════════════════ */
-function openPreview(docId, filename, ext) {
-  document.getElementById('preview-filename').textContent = filename;
-  const frame  = document.getElementById('preview-frame');
-  const img    = document.getElementById('preview-img');
-  const unsup  = document.getElementById('preview-unsupported');
-  const dlLink = document.getElementById('preview-download-link');
-
-  frame.style.display = 'none';
-  img.style.display   = 'none';
-  unsup.classList.add('d-none');
-
-  dlLink.href = '/download/' + docId;
-
-  if (ext === 'pdf') {
-    frame.src = '/preview/' + docId;
-    frame.style.display = 'block';
-  } else if (['jpg','jpeg','png'].includes(ext)) {
-    img.src = '/preview/' + docId;
-    img.style.display = 'block';
-  } else {
-    unsup.classList.remove('d-none');
+            }
+            searchResults.classList.add('active');
+          }).catch(() => { });
+      }, 350);
+    });
+    document.addEventListener('click', e => {
+      const sw = document.getElementById('search-wrap');
+      if (sw && !sw.contains(e.target)) searchResults.classList.remove('active');
+    });
   }
-  new bootstrap.Modal(document.getElementById('preview-modal')).show();
-}
 
-/* ═══════════════════════════════════════════
-   7. CATEGORY FILTER (Feature 9)
-   ═══════════════════════════════════════════ */
-function filterByCategory(catId) {
-  document.querySelectorAll('#docs-table tbody tr').forEach(row => {
-    row.style.display = (catId === null || String(row.dataset.cat) === String(catId)) ? '' : 'none';
+  /* ═══════════════════════════════════════════
+     6. DOCUMENT PREVIEW MODAL (Feature 13)
+     ═══════════════════════════════════════════ */
+  function openPreview(docId, filename, ext) {
+    document.getElementById('preview-filename').textContent = filename;
+    const frame = document.getElementById('preview-frame');
+    const img = document.getElementById('preview-img');
+    const unsup = document.getElementById('preview-unsupported');
+    const dlLink = document.getElementById('preview-download-link');
+
+    frame.style.display = 'none';
+    img.style.display = 'none';
+    unsup.classList.add('d-none');
+
+    dlLink.href = '/download/' + docId;
+
+    if (ext === 'pdf') {
+      frame.src = '/preview/' + docId;
+      frame.style.display = 'block';
+    } else if (['jpg', 'jpeg', 'png'].includes(ext)) {
+      img.src = '/preview/' + docId;
+      img.style.display = 'block';
+    } else {
+      unsup.classList.remove('d-none');
+    }
+    new bootstrap.Modal(document.getElementById('preview-modal')).show();
+  }
+
+  /* ═══════════════════════════════════════════
+     7. CATEGORY FILTER (Feature 9)
+     ═══════════════════════════════════════════ */
+  function filterByCategory(catId) {
+    document.querySelectorAll('#docs-table tbody tr').forEach(row => {
+      row.style.display = (catId === null || String(row.dataset.cat) === String(catId)) ? '' : 'none';
+    });
+    document.querySelectorAll('[id^="cat-filter-"]').forEach(btn => btn.className = 'btn btn-sm btn-light');
+    const activeBtn = catId ? document.getElementById('cat-filter-' + catId) : document.getElementById('cat-filter-all');
+    if (activeBtn) activeBtn.className = 'btn btn-sm btn-primary';
+  }
+
+  /* ═══════════════════════════════════════════
+     8. DRAG & DROP UPLOAD (Feature 14/23)
+     ═══════════════════════════════════════════ */
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('up-file');
+  const uploadBtn = document.getElementById('upload-submit-btn');
+
+  const iconMap = {
+    pdf: { icon: 'bi-file-earmark-pdf-fill', color: '#ef4444' },
+    jpg: { icon: 'bi-file-earmark-image-fill', color: '#10b981' },
+    jpeg: { icon: 'bi-file-earmark-image-fill', color: '#10b981' },
+    png: { icon: 'bi-file-earmark-image-fill', color: '#10b981' },
+  };
+
+  function handleUploadFile(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf', 'jpg', 'jpeg', 'png'].includes(ext)) { showToast('Only PDF, JPG, or PNG files allowed.', 'danger'); return; }
+    const meta = iconMap[ext] || { icon: 'bi-file-earmark-fill', color: '#64748b' };
+    document.getElementById('file-preview-icon').className = 'bi ' + meta.icon;
+    document.getElementById('file-preview-icon').style.color = meta.color;
+    document.getElementById('file-preview-icon').style.fontSize = '2rem';
+    document.getElementById('file-preview-name').textContent = file.name;
+    document.getElementById('file-preview-size').textContent = formatBytes(file.size);
+    document.getElementById('file-preview').classList.remove('d-none');
+    document.getElementById('drop-icon').className = 'bi bi-check-circle-fill drop-icon';
+    document.getElementById('drop-icon').style.color = 'var(--success)';
+    if (uploadBtn) uploadBtn.disabled = false;
+  }
+
+  function clearUploadFile() {
+    if (fileInput) fileInput.value = '';
+    document.getElementById('file-preview').classList.add('d-none');
+    document.getElementById('drop-icon').className = 'bi bi-cloud-arrow-up drop-icon';
+    document.getElementById('drop-icon').style.color = '';
+    if (uploadBtn) uploadBtn.disabled = true;
+  }
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+
+  if (fileInput) fileInput.addEventListener('change', () => handleUploadFile(fileInput.files[0]));
+
+  if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
+      handleUploadFile(file);
+    });
+  }
+
+  const uploadForm = document.getElementById('upload-form');
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', function () {
+      const btn = document.getElementById('upload-submit-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading…'; }
+    });
+  }
+
+  /* ═══════════════════════════════════════════
+     9. COPY FAMILY CODE (Feature 29)
+     ═══════════════════════════════════════════ */
+  function copyFamilyCode(code) {
+    navigator.clipboard.writeText(code).then(() => showToast('Family code copied to clipboard!', 'success'));
+  }
+
+  /* ═══════════════════════════════════════════
+     10. TOAST NOTIFICATIONS (Feature 16)
+     ═══════════════════════════════════════════ */
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const icons = { success: 'bi-check-circle-fill', danger: 'bi-x-circle-fill', info: 'bi-info-circle-fill', warning: 'bi-exclamation-triangle-fill' };
+    const colors = { success: 'var(--success)', danger: 'var(--danger)', info: 'var(--primary)', warning: 'var(--warning)' };
+    const toast = document.createElement('div');
+    toast.className = 'toast-item ' + type;
+    toast.innerHTML = `<i class="bi ${icons[type] || icons.info} toast-icon" style="color:${colors[type] || colors.info};"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3500);
+  }
+
+  // Convert flash alerts to toasts
+  document.querySelectorAll('.alert').forEach(el => {
+    const type = el.classList.contains('alert-success') ? 'success' : el.classList.contains('alert-danger') ? 'danger' : el.classList.contains('alert-warning') ? 'warning' : 'info';
+    const text = el.textContent.trim().replace(/[×✕]/g, '').trim();
+    setTimeout(() => showToast(text, type), 600);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 4000);
   });
-  document.querySelectorAll('[id^="cat-filter-"]').forEach(btn => btn.className = 'btn btn-sm btn-light');
-  const activeBtn = catId ? document.getElementById('cat-filter-' + catId) : document.getElementById('cat-filter-all');
-  if (activeBtn) activeBtn.className = 'btn btn-sm btn-primary';
-}
 
-/* ═══════════════════════════════════════════
-   8. DRAG & DROP UPLOAD (Feature 14/23)
-   ═══════════════════════════════════════════ */
-const dropZone  = document.getElementById('drop-zone');
-const fileInput = document.getElementById('up-file');
-const uploadBtn = document.getElementById('upload-submit-btn');
+  /* ═══════════════════════════════════════════
+     11. CATEGORY ICON PICKER (Feature 9)
+     ═══════════════════════════════════════════ */
+  function setIcon(ico) {
+    const input = document.getElementById('icon-input');
+    const prev = document.getElementById('icon-preview');
+    if (input) input.value = ico;
+    if (prev) prev.className = 'bi ' + ico;
+  }
 
-const iconMap = {
-  pdf:  { icon:'bi-file-earmark-pdf-fill',  color:'#ef4444' },
-  jpg:  { icon:'bi-file-earmark-image-fill', color:'#10b981' },
-  jpeg: { icon:'bi-file-earmark-image-fill', color:'#10b981' },
-  png:  { icon:'bi-file-earmark-image-fill', color:'#10b981' },
-};
-
-function handleUploadFile(file) {
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (!['pdf','jpg','jpeg','png'].includes(ext)) { showToast('Only PDF, JPG, or PNG files allowed.','danger'); return; }
-  const meta = iconMap[ext] || { icon:'bi-file-earmark-fill', color:'#64748b' };
-  document.getElementById('file-preview-icon').className  = 'bi ' + meta.icon;
-  document.getElementById('file-preview-icon').style.color     = meta.color;
-  document.getElementById('file-preview-icon').style.fontSize  = '2rem';
-  document.getElementById('file-preview-name').textContent = file.name;
-  document.getElementById('file-preview-size').textContent = formatBytes(file.size);
-  document.getElementById('file-preview').classList.remove('d-none');
-  document.getElementById('drop-icon').className  = 'bi bi-check-circle-fill drop-icon';
-  document.getElementById('drop-icon').style.color = 'var(--success)';
-  if (uploadBtn) uploadBtn.disabled = false;
-}
-
-function clearUploadFile() {
-  if (fileInput) fileInput.value = '';
-  document.getElementById('file-preview').classList.add('d-none');
-  document.getElementById('drop-icon').className  = 'bi bi-cloud-arrow-up drop-icon';
-  document.getElementById('drop-icon').style.color = '';
-  if (uploadBtn) uploadBtn.disabled = true;
-}
-
-function formatBytes(b) {
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  return (b/1048576).toFixed(1) + ' MB';
-}
-
-if (fileInput) fileInput.addEventListener('change', () => handleUploadFile(fileInput.files[0]));
-
-if (dropZone) {
-  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
-    handleUploadFile(file);
+  /* ═══════════════════════════════════════════
+     12. SECURITY (Feature 24)
+     ═══════════════════════════════════════════ */
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) || (e.ctrlKey && e.key === 'U') || e.key === 'PrintScreen')
+      e.preventDefault();
   });
-}
-
-const uploadForm = document.getElementById('upload-form');
-if (uploadForm) {
-  uploadForm.addEventListener('submit', function() {
-    const btn = document.getElementById('upload-submit-btn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading…'; }
+  document.addEventListener('visibilitychange', function () {
+    const ov = document.getElementById('security-overlay');
+    if (!ov) return;
+    if (document.visibilityState === 'hidden') { ov.style.display = 'flex'; document.body.style.filter = 'blur(10px)'; }
+    else { ov.style.display = 'none'; document.body.style.filter = ''; }
   });
-}
-
-/* ═══════════════════════════════════════════
-   9. COPY FAMILY CODE (Feature 29)
-   ═══════════════════════════════════════════ */
-function copyFamilyCode(code) {
-  navigator.clipboard.writeText(code).then(() => showToast('Family code copied to clipboard!', 'success'));
-}
-
-/* ═══════════════════════════════════════════
-   10. TOAST NOTIFICATIONS (Feature 16)
-   ═══════════════════════════════════════════ */
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const icons  = { success:'bi-check-circle-fill', danger:'bi-x-circle-fill', info:'bi-info-circle-fill', warning:'bi-exclamation-triangle-fill' };
-  const colors = { success:'var(--success)', danger:'var(--danger)', info:'var(--primary)', warning:'var(--warning)' };
-  const toast  = document.createElement('div');
-  toast.className = 'toast-item ' + type;
-  toast.innerHTML = `<i class="bi ${icons[type]||icons.info} toast-icon" style="color:${colors[type]||colors.info};"></i><span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => { toast.style.transition='opacity 0.4s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),400); }, 3500);
-}
-
-// Convert flash alerts to toasts
-document.querySelectorAll('.alert').forEach(el => {
-  const type = el.classList.contains('alert-success')?'success': el.classList.contains('alert-danger')?'danger': el.classList.contains('alert-warning')?'warning':'info';
-  const text = el.textContent.trim().replace(/[×✕]/g,'').trim();
-  setTimeout(() => showToast(text, type), 600);
-  setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 4000);
-});
-
-/* ═══════════════════════════════════════════
-   11. CATEGORY ICON PICKER (Feature 9)
-   ═══════════════════════════════════════════ */
-function setIcon(ico) {
-  const input = document.getElementById('icon-input');
-  const prev  = document.getElementById('icon-preview');
-  if (input) input.value = ico;
-  if (prev)  prev.className = 'bi ' + ico;
-}
-
-/* ═══════════════════════════════════════════
-   12. SECURITY (Feature 24)
-   ═══════════════════════════════════════════ */
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key==='U') || e.key==='PrintScreen')
-    e.preventDefault();
-});
-document.addEventListener('visibilitychange', function() {
-  const ov = document.getElementById('security-overlay');
-  if (!ov) return;
-  if (document.visibilityState === 'hidden') { ov.style.display='flex'; document.body.style.filter='blur(10px)'; }
-  else { ov.style.display='none'; document.body.style.filter=''; }
-});
 </script>
 {% endblock %}
